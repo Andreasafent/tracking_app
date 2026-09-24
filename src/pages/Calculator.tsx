@@ -151,7 +151,7 @@ export function Calculator() {
         action={
           <button
             type="button"
-            className="grid size-8 place-items-center rounded-full bg-accent text-white"
+            className="grid size-8 place-items-center rounded-full bg-accent text-white transition hover:brightness-110 active:scale-90"
             aria-label="Προσθήκη τροφίμου"
             onClick={() => setPicker(true)}
           >
@@ -179,7 +179,7 @@ export function Calculator() {
                 <button
                   type="button"
                   aria-label="Αφαίρεση"
-                  className="text-muted"
+                  className="text-muted transition hover:text-bad active:scale-90"
                   onClick={() => update({ ...draft, rows: draft.rows.filter((_, j) => j !== i) })}
                 >
                   <Trash2 size={16} />
@@ -245,7 +245,7 @@ function FoodPicker(props: { open: boolean; foods: Food[]; onClose: () => void; 
       <ul className="divide-y divide-line">
         {list.map((f) => (
           <li key={f.id}>
-            <button type="button" onClick={() => props.onPick(f)} className="flex w-full items-center justify-between py-3 text-left">
+            <button type="button" onClick={() => props.onPick(f)} className="-mx-2 flex w-[calc(100%+1rem)] items-center rounded-xl px-2 py-3 text-left transition hover:bg-surface-2 justify-between">
               <span className="text-sm font-semibold">{f.name}</span>
               <span className="text-xs text-muted">
                 {num(f.kcal, 0)} kcal / {f.unit === 'piece' ? `${num(f.per_amount)} τεμ` : `${num(f.per_amount)}g`}

@@ -79,6 +79,8 @@ type MealEntryRow = {
 
 type PeriodRow = {
   burn_estimate: number
+  carbs_target: number | null
+  fat_target: number | null
   created_at: string
   end_date: string
   id: string
@@ -175,6 +177,8 @@ type DailySummaryRow = Nullable<{
   calf: number
   glutes: number
   arm: number
+  carbs_target: number
+  fat_target: number
 }>
 
 export type Database = {

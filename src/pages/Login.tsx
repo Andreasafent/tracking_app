@@ -39,7 +39,7 @@ export function Login() {
         <button
           type="button"
           onClick={() => setMode(mode === 'in' ? 'up' : 'in')}
-          className="w-full pt-1 text-center text-xs text-muted"
+          className="w-full pt-1 text-center text-xs text-muted transition hover:text-text"
         >
           {mode === 'in' ? 'Πρώτη φορά; Δημιουργία λογαριασμού' : 'Έχεις λογαριασμό; Σύνδεση'}
         </button>

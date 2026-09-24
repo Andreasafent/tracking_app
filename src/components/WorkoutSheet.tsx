@@ -82,7 +82,7 @@ export function WorkoutSheet(props: { open: boolean; date: ISODate; log: DailyLo
                       .join(' · ') || '—'}
                   </div>
                 </div>
-                <button type="button" aria-label="Διαγραφή" className="text-muted" onClick={() => deleteWorkout.mutate(w.id)}>
+                <button type="button" aria-label="Διαγραφή" className="text-muted transition hover:text-bad active:scale-90" onClick={() => deleteWorkout.mutate(w.id)}>
                   <Trash2 size={18} />
                 </button>
               </li>

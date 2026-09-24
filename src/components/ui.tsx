@@ -48,7 +48,7 @@ export function IconButton(props: { onClick: () => void; label: string; children
       aria-label={props.label}
       onClick={props.onClick}
       disabled={props.disabled}
-      className="grid size-9 place-items-center rounded-full bg-surface-2 text-text transition active:scale-95 disabled:opacity-30"
+      className="grid size-9 place-items-center rounded-full bg-surface-2 text-text transition duration-150 hover:bg-line active:scale-90 disabled:opacity-30 disabled:hover:bg-surface-2"
     >
       {props.children}
     </button>
@@ -62,9 +62,11 @@ export function QuickActions(props: { children: ReactNode }) {
 
 export function QuickAction(props: { icon: ReactNode; label: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={props.onClick} className="flex w-16 flex-col items-center gap-1.5 active:scale-95">
-      <span className="grid size-12 place-items-center rounded-full bg-surface-2 text-text">{props.icon}</span>
-      <span className="text-xs font-medium text-muted">{props.label}</span>
+    <button type="button" onClick={props.onClick} className="group flex w-16 flex-col items-center gap-1.5 transition active:scale-95">
+      <span className="grid size-12 place-items-center rounded-full bg-surface-2 text-text transition duration-200 group-hover:-translate-y-0.5 group-hover:bg-accent group-hover:text-white">
+        {props.icon}
+      </span>
+      <span className="text-xs font-medium text-muted transition group-hover:text-text">{props.label}</span>
     </button>
   )
 }
@@ -85,7 +87,8 @@ export function Widget(props: {
       onClick={props.onClick}
       className={clsx(
         'block w-full rounded-3xl bg-surface p-4 text-left',
-        props.onClick && 'transition active:scale-[0.99]',
+        props.onClick &&
+          'transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 hover:ring-1 hover:ring-line active:translate-y-0 active:scale-[0.99]',
         props.className,
       )}
     >
@@ -173,6 +176,35 @@ export function Ring(props: { value: number | null; max: number; size?: number; 
   )
 }
 
+/** Ring for one macro: value in the middle, "/ target" under it, name below. No target → empty track. */
+export function MacroRing(props: {
+  label: string
+  value: number | null | undefined
+  target: number | null | undefined
+  unit: string
+  over: 'good' | 'bad'
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <Ring
+        value={props.value ?? null}
+        max={props.target ?? 0}
+        size={104}
+        over={props.over}
+        label={
+          <>
+            <b className="text-lg">{num(props.value, 0)}</b>
+            <div className="text-[10px] text-muted">
+              {props.target ? `/ ${num(props.target, 0)} ${props.unit}` : `${props.unit} · χωρίς στόχο`}
+            </div>
+          </>
+        }
+      />
+      <span className="text-[11px] font-semibold tracking-wider text-muted uppercase">{props.label}</span>
+    </div>
+  )
+}
+
 export function Bar(props: { value: number | null; max: number | null; tone?: 'accent' | 'good' }) {
   const pct = props.value == null || !props.max ? 0 : Math.min(props.value / props.max, 1)
   return (
@@ -200,12 +232,17 @@ export function Sheet(props: { open: boolean; onClose: () => void; title: string
 
   if (!props.open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={props.onClose} />
-      <div className="relative flex max-h-[92dvh] w-full flex-col rounded-t-3xl bg-surface lg:max-w-lg lg:rounded-3xl">
+    <div data-no-swipe className="fixed inset-0 z-50 flex items-end justify-center lg:items-center">
+      <div className="anim-fade absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={props.onClose} />
+      <div className="anim-sheet relative flex max-h-[92dvh] w-full flex-col rounded-t-3xl bg-surface lg:max-w-lg lg:rounded-3xl">
         <div className="flex items-center gap-2 border-b border-line px-5 py-4">
           <h3 className="text-base font-semibold">{props.title}</h3>
-          <button type="button" onClick={props.onClose} aria-label="Κλείσιμο" className="ml-auto text-muted">
+          <button
+            type="button"
+            onClick={props.onClose}
+            aria-label="Κλείσιμο"
+            className="ml-auto grid size-8 place-items-center rounded-full text-muted transition hover:bg-surface-2 hover:text-text"
+          >
             <X size={20} />
           </button>
         </div>
@@ -235,9 +272,9 @@ export function Button(props: {
       disabled={props.disabled}
       className={clsx(
         'inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition active:scale-[0.98] disabled:opacity-40',
-        (props.variant ?? 'primary') === 'primary' && 'bg-accent text-white',
-        props.variant === 'ghost' && 'bg-surface-2 text-text',
-        props.variant === 'danger' && 'bg-bad/15 text-bad',
+        (props.variant ?? 'primary') === 'primary' && 'bg-accent text-white hover:brightness-110',
+        props.variant === 'ghost' && 'bg-surface-2 text-text hover:bg-line',
+        props.variant === 'danger' && 'bg-bad/15 text-bad hover:bg-bad/25',
         props.className,
       )}
     >
@@ -300,7 +337,7 @@ export function YesNo(props: { value: boolean | null | undefined; onChange: (v: 
       onClick={() => props.onChange(props.value === v ? null : v)}
       className={clsx(
         'h-9 rounded-full px-4 text-sm font-semibold transition',
-        props.value === v ? 'bg-accent text-white' : 'bg-surface-2 text-muted',
+        props.value === v ? 'bg-accent text-white' : 'bg-surface-2 text-muted hover:bg-line hover:text-text',
       )}
     >
       {label}
@@ -324,7 +361,7 @@ export function Scale(props: { label: string; value: number | null | undefined; 
         <span className="flex items-center gap-2">
           <b className={clsx('text-lg', v == null && 'text-muted')}>{v == null ? '—' : num(v)}</b>
           {v != null && (
-            <button type="button" onClick={() => props.onChange(null)} className="text-xs text-muted">
+            <button type="button" onClick={() => props.onChange(null)} className="text-xs text-muted transition hover:text-bad">
               καθαρ.
             </button>
           )}
@@ -349,11 +386,11 @@ export function PlusMinus(props: { value: number | null | undefined; onChange: (
   const v = props.value ?? 0
   return (
     <span className="flex items-center gap-2">
-      <button type="button" className="grid size-9 place-items-center rounded-full bg-surface-2 text-lg" onClick={() => props.onChange(Math.max(0, +(v - props.step).toFixed(2)))}>
+      <button type="button" className="grid size-9 place-items-center rounded-full bg-surface-2 text-lg transition hover:bg-line active:scale-90" onClick={() => props.onChange(Math.max(0, +(v - props.step).toFixed(2)))}>
         −
       </button>
       <b className="w-14 text-center text-lg">{props.value == null ? '—' : num(props.value, 2)}</b>
-      <button type="button" className="grid size-9 place-items-center rounded-full bg-surface-2 text-lg" onClick={() => props.onChange(+(v + props.step).toFixed(2))}>
+      <button type="button" className="grid size-9 place-items-center rounded-full bg-surface-2 text-lg transition hover:bg-line active:scale-90" onClick={() => props.onChange(+(v + props.step).toFixed(2))}>
         +
       </button>
       {props.unit && <span className="text-xs text-muted">{props.unit}</span>}
@@ -395,7 +432,7 @@ export function Segmented<T extends string>(props: {
           onClick={() => props.onChange(o.value)}
           className={clsx(
             'h-9 flex-1 rounded-full px-3 text-sm font-semibold transition',
-            props.value === o.value ? 'bg-surface text-text shadow' : 'text-muted',
+            props.value === o.value ? 'bg-surface text-text shadow' : 'text-muted hover:text-text',
           )}
         >
           {o.label}

@@ -92,11 +92,13 @@ export function Plan() {
               }
             >
               {p.label && <div className="-mt-2 mb-3 text-xs text-muted">{fmtRange({ from: p.start_date, to: p.end_date })}</div>}
-              <div className="grid grid-cols-4 gap-2">
-                <Stat label="Target" value={num(p.target_intake, 0)} />
-                <Stat label="Burn" value={num(p.burn_estimate, 0)} />
-                <Stat label="Έλλειμμα" value={num(p.burn_estimate - p.target_intake, 0)} />
-                <Stat label="Πρωτ." value={num(p.protein_target, 0)} unit="g" />
+              <div className="grid grid-cols-3 gap-2">
+                <Stat label="Target" value={num(p.target_intake, 0)} unit="kcal" />
+                <Stat label="Burn" value={num(p.burn_estimate, 0)} unit="kcal" />
+                <Stat label="Έλλειμμα" value={num(p.burn_estimate - p.target_intake, 0)} unit="kcal" />
+                <Stat label="Πρωτεΐνη" value={num(p.protein_target, 0)} unit="g" />
+                <Stat label="Υδατάνθρ." value={num(p.carbs_target, 0)} unit="g" />
+                <Stat label="Λιπαρά" value={num(p.fat_target, 0)} unit="g" />
               </div>
               {status !== 'future' && (
                 <>
@@ -167,6 +169,8 @@ function PeriodSheet(props: { period: Partial<Period> | null; onClose: () => voi
                   target_intake: p.target_intake!,
                   burn_estimate: p.burn_estimate!,
                   protein_target: p.protein_target ?? 180,
+                  carbs_target: p.carbs_target ?? null,
+                  fat_target: p.fat_target ?? null,
                   notes: p.notes || null,
                 },
                 { onSuccess: props.onClose },
@@ -204,6 +208,12 @@ function PeriodSheet(props: { period: Partial<Period> | null; onClose: () => voi
       </Field>
       <Field label="Στόχος πρωτεΐνης">
         <NumberInput value={p.protein_target} integer onChange={(v) => set('protein_target', v == null ? null : Math.round(v))} unit="g" />
+      </Field>
+      <Field label="Στόχος υδατανθράκων" hint="Κενό = χωρίς στόχο">
+        <NumberInput value={p.carbs_target} integer onChange={(v) => set('carbs_target', v == null ? null : Math.round(v))} unit="g" />
+      </Field>
+      <Field label="Στόχος λιπαρών" hint="Κενό = χωρίς στόχο">
+        <NumberInput value={p.fat_target} integer onChange={(v) => set('fat_target', v == null ? null : Math.round(v))} unit="g" />
       </Field>
     </Sheet>
   )

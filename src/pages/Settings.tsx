@@ -62,7 +62,7 @@ export function SettingsPage() {
               <button
                 type="button"
                 aria-label={a.archived ? 'Επαναφορά' : 'Απόκρυψη'}
-                className="text-muted"
+                className="text-muted transition hover:text-text active:scale-90"
                 onClick={() => save.mutate({ id: a.id, name: a.name, archived: !a.archived })}
               >
                 {a.archived ? <ArchiveRestore size={16} /> : <Archive size={16} />}

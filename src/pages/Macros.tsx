@@ -91,8 +91,8 @@ export function Macros() {
         </div>
         <div className="mt-4 space-y-3">
           <MacroBar label="Πρωτεΐνη" value={total(rows, 'protein')} target={period?.protein_target ?? 180} />
-          <MacroBar label="Υδατάνθρακες" value={total(rows, 'carbs')} />
-          <MacroBar label="Λιπαρά" value={total(rows, 'fat')} />
+          <MacroBar label="Υδατάνθρακες" value={total(rows, 'carbs')} target={period?.carbs_target ?? undefined} />
+          <MacroBar label="Λιπαρά" value={total(rows, 'fat')} target={period?.fat_target ?? undefined} />
         </div>
       </Widget>
 
@@ -109,7 +109,7 @@ export function Macros() {
                   <button
                     type="button"
                     aria-label="Calculator"
-                    className="grid size-8 place-items-center rounded-full bg-surface-2 text-muted"
+                    className="grid size-8 place-items-center rounded-full bg-surface-2 text-muted transition hover:bg-line hover:text-text active:scale-90"
                     onClick={() => navigate(`/calculator?slot=${s.value}&d=${date}`)}
                   >
                     <Calculator size={15} />
@@ -117,7 +117,7 @@ export function Macros() {
                   <button
                     type="button"
                     aria-label="Προσθήκη"
-                    className="grid size-8 place-items-center rounded-full bg-accent text-white"
+                    className="grid size-8 place-items-center rounded-full bg-accent text-white transition hover:brightness-110 active:scale-90"
                     onClick={() => setEditing({ slot: s.value })}
                   >
                     <Plus size={16} />
@@ -140,7 +140,7 @@ export function Macros() {
                       <button
                         type="button"
                         onClick={() => setEditing({ slot: s.value, entry: e })}
-                        className="flex w-full items-center gap-2 py-2 text-left"
+                        className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-2 rounded-xl px-2 py-2 text-left transition hover:bg-surface-2"
                       >
                         <span className="flex-1 truncate text-sm">
                           {e.name || (s.value === 'snack' ? `Snack ${i + 1}` : 'Καταχώρηση')}

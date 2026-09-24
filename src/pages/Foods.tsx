@@ -35,7 +35,7 @@ export function Foods() {
         <ul className="divide-y divide-line">
           {list.map((f) => (
             <li key={f.id}>
-              <button type="button" onClick={() => setEditing(f)} className="flex w-full items-center gap-3 py-3 text-left">
+              <button type="button" onClick={() => setEditing(f)} className="-mx-2 flex w-[calc(100%+1rem)] items-center rounded-xl px-2 py-3 text-left transition hover:bg-surface-2 gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold">{f.name}</div>
                   <div className="text-xs text-muted">

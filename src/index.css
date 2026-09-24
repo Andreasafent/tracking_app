@@ -113,3 +113,62 @@ input[type="number"] {
 .no-scrollbar {
   scrollbar-width: none;
 }
+
+/* ─── Interaction: pointer on everything clickable (Tailwind's preflight resets buttons to default) */
+@layer base {
+  button:not(:disabled),
+  [role="button"],
+  a[href],
+  select,
+  summary,
+  input[type="date"] {
+    cursor: pointer;
+  }
+  input[type="range"] {
+    cursor: grab;
+  }
+  input[type="range"]:active {
+    cursor: grabbing;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* ─── Small motion: day changes slide in, sheets rise, overlays fade */
+@keyframes slide-from-right {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes slide-from-left {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.anim-from-right { animation: slide-from-right 0.25s ease-out; }
+.anim-from-left { animation: slide-from-left 0.25s ease-out; }
+.anim-fade { animation: fade-in 0.2s ease-out; }
+.anim-sheet { animation: sheet-up 0.28s cubic-bezier(0.2, 0.9, 0.3, 1); }
+@media (min-width: 1024px) {
+  .anim-sheet { animation: pop-in 0.2s ease-out; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-from-right,
+  .anim-from-left,
+  .anim-fade,
+  .anim-sheet {
+    animation: none;
+  }
+}
