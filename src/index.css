@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/* Revolut-inspired tokens. Dark is the primary design; light follows the OS,
+   and data-theme on <html> lets the user force either. */
+:root {
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #ececf1;
+  --line: #e2e2e8;
+  --text: #0b0b0f;
+  --muted: #6b6b76;
+  --accent: #2e6bff;
+  --accent-soft: rgba(46, 107, 255, 0.12);
+  --good: #16a35a;
+  --bad: #e5484d;
+  --warn: #d98a00;
+  --hero-glow: rgba(46, 107, 255, 0.18);
+  /* chart categorical slots (validated reference palette) */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0b0f;
+    --surface: #17171c;
+    --surface-2: #23232b;
+    --line: #2a2a33;
+    --text: #ffffff;
+    --muted: #8e8e98;
+    --accent: #4d82ff;
+    --accent-soft: rgba(77, 130, 255, 0.16);
+    --good: #2fd479;
+    --bad: #ff5a5f;
+    --warn: #ffb020;
+    --hero-glow: rgba(77, 130, 255, 0.35);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b0b0f;
+  --surface: #17171c;
+  --surface-2: #23232b;
+  --line: #2a2a33;
+  --text: #ffffff;
+  --muted: #8e8e98;
+  --accent: #4d82ff;
+  --accent-soft: rgba(77, 130, 255, 0.16);
+  --good: #2fd479;
+  --bad: #ff5a5f;
+  --warn: #ffb020;
+  --hero-glow: rgba(77, 130, 255, 0.35);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+  --color-warn: var(--warn);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  font-feature-settings: "tnum" 1;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+.hero-glow {
+  background: radial-gradient(120% 90% at 50% 0%, var(--hero-glow) 0%, transparent 70%);
+}
+
+/* number inputs: no spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
