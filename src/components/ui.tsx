@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { num, parseNum } from '../lib/format'
 
@@ -80,15 +80,28 @@ export function Widget(props: {
   className?: string
   children: ReactNode
 }) {
-  const Tag = props.onClick ? 'button' : 'section'
+  // A clickable card is a div with button semantics (not a <button>), so it can hold its own buttons.
+  // Inner buttons should stopPropagation so they don't also trigger the card.
+  const clickable = props.onClick
+    ? {
+        role: 'button',
+        tabIndex: 0,
+        onClick: props.onClick,
+        onKeyDown: (e: React.KeyboardEvent) => {
+          if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault()
+            props.onClick!()
+          }
+        },
+      }
+    : {}
   return (
-    <Tag
-      type={props.onClick ? 'button' : undefined}
-      onClick={props.onClick}
+    <section
+      {...clickable}
       className={clsx(
         'block w-full rounded-3xl bg-surface p-4 text-left',
         props.onClick &&
-          'transition duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 hover:ring-1 hover:ring-line active:translate-y-0 active:scale-[0.99]',
+          'cursor-pointer transition duration-200 outline-none hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 hover:ring-1 hover:ring-line focus-visible:ring-2 focus-visible:ring-accent active:translate-y-0 active:scale-[0.99]',
         props.className,
       )}
     >
@@ -98,7 +111,7 @@ export function Widget(props: {
         <div className="ml-auto">{props.action}</div>
       </div>
       {props.children}
-    </Tag>
+    </section>
   )
 }
 
@@ -183,24 +196,29 @@ export function MacroRing(props: {
   target: number | null | undefined
   unit: string
   over: 'good' | 'bad'
+  size?: number
 }) {
+  const size = props.size ?? 104
   return (
     <div className="flex flex-col items-center gap-1.5">
       <Ring
         value={props.value ?? null}
         max={props.target ?? 0}
-        size={104}
+        size={size}
         over={props.over}
         label={
           <>
-            <b className="text-lg">{num(props.value, 0)}</b>
+            <b className={size < 100 ? 'text-base' : 'text-lg'}>{num(props.value, 0)}</b>
             <div className="text-[10px] text-muted">
-              {props.target ? `/ ${num(props.target, 0)} ${props.unit}` : `${props.unit} · χωρίς στόχο`}
+              {props.target ? `/ ${num(props.target, 0)} ${props.unit}` : props.unit}
             </div>
           </>
         }
       />
-      <span className="text-[11px] font-semibold tracking-wider text-muted uppercase">{props.label}</span>
+      <span className="text-center text-[11px] leading-tight font-semibold tracking-wider text-muted uppercase">
+        {props.label}
+        {!props.target && <span className="block text-[10px] font-medium tracking-normal normal-case">χωρίς στόχο</span>}
+      </span>
     </div>
   )
 }
@@ -305,6 +323,9 @@ export function NumberInput(props: {
   placeholder?: string
   integer?: boolean
   className?: string
+  /** Enables ↑/↓ keys and small up/down buttons that change the value by this amount. */
+  step?: number
+  min?: number
 }) {
   const show = (v: number | null | undefined) => (v == null ? '' : String(v).replace('.', ','))
   const [text, setText] = useState(show(props.value))
@@ -312,6 +333,15 @@ export function NumberInput(props: {
   useEffect(() => {
     if (parseNum(text) !== (props.value ?? null)) setText(show(props.value))
   }, [props.value])
+
+  const bump = (dir: 1 | -1) => {
+    if (!props.step) return
+    const next = +((props.value ?? 0) + dir * props.step).toFixed(2)
+    const v = Math.max(props.min ?? 0, next)
+    setText(show(v))
+    props.onChange(v)
+  }
+
   return (
     <span className={clsx('flex items-center gap-1.5', props.className)}>
       <input
@@ -322,8 +352,34 @@ export function NumberInput(props: {
           setText(e.target.value)
           props.onChange(parseNum(e.target.value))
         }}
-        className="h-10 w-24 rounded-xl bg-surface-2 px-3 text-right text-base font-semibold outline-none focus:ring-2 focus:ring-accent"
+        onKeyDown={(e) => {
+          if (!props.step) return
+          if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault()
+            bump(e.key === 'ArrowUp' ? 1 : -1)
+          }
+        }}
+        className={clsx(
+          'h-10 rounded-xl bg-surface-2 px-3 text-right text-base font-semibold outline-none focus:ring-2 focus:ring-accent',
+          props.step ? 'w-20' : 'w-24',
+        )}
       />
+      {props.step != null && (
+        <span className="flex flex-col">
+          {([1, -1] as const).map((d) => (
+            <button
+              key={d}
+              type="button"
+              tabIndex={-1}
+              aria-label={d === 1 ? 'Αύξηση' : 'Μείωση'}
+              onClick={() => bump(d)}
+              className="grid h-5 w-6 place-items-center rounded-md text-muted transition hover:bg-surface-2 hover:text-text active:scale-90"
+            >
+              {d === 1 ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+          ))}
+        </span>
+      )}
       {props.unit && <span className="w-8 text-xs text-muted">{props.unit}</span>}
     </span>
   )

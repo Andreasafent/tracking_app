@@ -1,5 +1,6 @@
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router'
 import { Button, ErrorNote, Field, Hero, NumberInput, QuickAction, QuickActions, Segmented, Sheet, TextInput, Widget } from '../components/ui'
 import { useDeleteRow, useFoods, useSaveRow } from '../lib/api'
 import type { Food } from '../lib/database.types'
@@ -8,7 +9,17 @@ import { num } from '../lib/format'
 export function Foods() {
   const foods = useFoods()
   const [q, setQ] = useState('')
-  const [editing, setEditing] = useState<Partial<Food> | null>(null)
+  const [params] = useSearchParams()
+  const navigate = useNavigate()
+  // Opened from the Calculator's "Νέο τρόφιμο": start the form with the searched name, and return there after.
+  const fromCalculator = params.get('back') === '1'
+  const [editing, setEditing] = useState<Partial<Food> | null>(() =>
+    params.has('new') ? { name: params.get('new') ?? '', unit: 'g', per_amount: 100 } : null,
+  )
+  const closeSheet = () => {
+    setEditing(null)
+    if (fromCalculator) navigate(-1)
+  }
   const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
   const list = (foods.data ?? []).filter((f) => norm(f.name).includes(norm(q)))
 
@@ -52,7 +63,7 @@ export function Foods() {
         </ul>
       </Widget>
 
-      <FoodSheet food={editing} onClose={() => setEditing(null)} />
+      <FoodSheet food={editing} onClose={closeSheet} />
     </div>
   )
 }

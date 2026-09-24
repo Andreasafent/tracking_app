@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { must, supabase } from './supabase'
-import type { Database, DailyLog, Json, MealSlot } from './database.types'
+import type { Database, DailyLog, Json, MealEntry, MealSlot } from './database.types'
 import type { ISODate } from './dates'
 
 type Tables = Database['public']['Tables']
@@ -30,6 +30,14 @@ export function useMeals(date: ISODate) {
     queryKey: ['meals', date],
     queryFn: async () =>
       must(await supabase.from('meal_entries').select('*').eq('date', date).order('created_at')),
+  })
+}
+
+export function useMealEntry(id: string | null) {
+  return useQuery({
+    queryKey: ['meals', 'entry', id],
+    enabled: !!id,
+    queryFn: async () => must(await supabase.from('meal_entries').select('*').eq('id', id!).maybeSingle()),
   })
 }
 
@@ -100,6 +108,7 @@ export type MealInput = {
   carbs?: number | null
   fat?: number | null
   items?: Json | null
+  servings?: number
 }
 
 export function useSaveMeal() {
@@ -108,6 +117,29 @@ export function useSaveMeal() {
       id
         ? must(await supabase.from('meal_entries').update(v).eq('id', id))
         : must(await supabase.from('meal_entries').insert(v)),
+    ['meals'],
+  )
+}
+
+/** Copies meal entries (e.g. yesterday's breakfast) onto another date as new entries. */
+export function useCopyMeals() {
+  return useWrite(
+    async ({ entries, date }: { entries: MealEntry[]; date: ISODate }) =>
+      must(
+        await supabase.from('meal_entries').insert(
+          entries.map((e) => ({
+            date,
+            slot: e.slot,
+            name: e.name,
+            kcal: e.kcal,
+            protein: e.protein,
+            carbs: e.carbs,
+            fat: e.fat,
+            items: e.items,
+            servings: e.servings,
+          })),
+        ),
+      ),
     ['meals'],
   )
 }

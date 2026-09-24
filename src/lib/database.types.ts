@@ -73,6 +73,7 @@ type MealEntryRow = {
   kcal: number
   name: string | null
   protein: number | null
+  servings: number
   slot: MealSlot
   user_id: string
 }
