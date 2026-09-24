@@ -166,26 +166,29 @@ def main(uid):
         if not d or d > TODAY:
             continue
         r = r + [""] * (31 - len(r))
-        kcal_total = 0
+        entries = []
         for i, slot in enumerate(slots):
             kcal, prot, carbs, fat = n(r[2 + i]), n(r[10 + i]), n(r[18 + i]), n(r[25 + i])
             if all(v is None for v in (kcal, prot, carbs, fat)):
                 continue
-            stmts.append(
-                "insert into meal_entries (user_id,date,slot,kcal,protein,carbs,fat) "
-                f"values ({U},{sql(d)},'{slot}',{sql(kcal or 0)},{sql(prot)},{sql(carbs)},{sql(fat)});"
-            )
-            kcal_total += kcal or 0
-            meals += 1
+            entries.append({"slot": slot, "name": None, "kcal": kcal or 0, "p": prot, "c": carbs, "f": fat})
+        kcal_total = sum(e["kcal"] for e in entries)
         g = genika_kcal.get(d)
         if g is not None and kcal_total == 0:
-            # Some days only have a total typed straight into ΓΕΝΙΚΑ (no per-meal breakdown).
+            # Some days only have the calorie total typed straight into ΓΕΝΙΚΑ (no per-meal breakdown).
+            # Put it on the day's macro-only entry if there is one, otherwise add a single entry.
+            if entries:
+                entries[0].update(kcal=g, name="Σύνολο ημέρας (χωρίς ανάλυση)")
+            else:
+                entries.append({"slot": "lunch", "name": "Σύνολο ημέρας (χωρίς ανάλυση)", "kcal": g, "p": None, "c": None, "f": None})
+            kcal_total = g
+        for e in entries:
             stmts.append(
-                "insert into meal_entries (user_id,date,slot,name,kcal) "
-                f"values ({U},{sql(d)},'lunch','Σύνολο ημέρας (χωρίς ανάλυση)',{sql(g)});"
+                "insert into meal_entries (user_id,date,slot,name,kcal,protein,carbs,fat) "
+                f"values ({U},{sql(d)},'{e['slot']}',{sql(e['name'])},{sql(e['kcal'])},{sql(e['p'])},{sql(e['c'])},{sql(e['f'])});"
             )
             meals += 1
-        elif g is not None and abs(g - kcal_total) > 0.5:
+        if g is not None and abs(g - kcal_total) > 0.5:
             mismatched += 1
             print(f"  kcal mismatch {d}: ΓΕΝΙΚΑ {g} vs MACROS meals {kcal_total}")
     report.update(meal_entries=meals, kcal_mismatch_days=mismatched)
@@ -223,7 +226,37 @@ def main(uid):
 
     (OUT / "import.sql").write_text("begin;\n" + "\n".join(stmts) + "\ncommit;\n", encoding="utf-8")
     print(report)
-    print(f"{len(stmts)} statements → {OUT / 'import.sql'}")
+    print(f"{len(stmts)} statements -> {OUT / 'import.sql'}")
+    write_compact(uid, stmts)
+
+
+def write_compact(uid, stmts, limit=45_000):
+    """Same data as import.sql, grouped into multi-row inserts and split into chunks
+    small enough to run one at a time. Each chunk sets auth.uid() for its transaction,
+    so user_id comes from the column default instead of being repeated on every row."""
+    pat = re.compile(r"insert into (\w+) \(user_id,([^)]*)\) values \('[^']+',(.*)\);$")
+    groups = {}
+    for st in stmts:
+        m = pat.match(st)
+        groups.setdefault((m[1], m[2]), []).append("(" + m[3].replace(f"'{uid}'", "auth.uid()") + ")")
+
+    head = "begin;select set_config('request.jwt.claims','{\"sub\":\"" + uid + "\"}',true);"
+    chunks, cur, size = [], [], 0
+    for (table, cols), rows in groups.items():
+        while rows:
+            batch = []
+            while rows and size < limit:
+                batch.append(rows.pop(0))
+                size += len(batch[-1])
+            cur.append(f"insert into {table} ({cols}) values\n" + ",\n".join(batch) + ";")
+            if size >= limit:
+                chunks.append(cur)
+                cur, size = [], 0
+    if cur:
+        chunks.append(cur)
+    for i, c in enumerate(chunks, 1):
+        (OUT / f"chunk{i}.sql").write_text(head + "\n" + "\n".join(c) + "\ncommit;\n", encoding="utf-8")
+    print(f"{len(chunks)} compact chunks")
 
 
 if __name__ == "__main__":
