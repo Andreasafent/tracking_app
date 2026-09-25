@@ -57,11 +57,34 @@ export function useActivities() {
   })
 }
 
+/** How many workouts use an activity (an activity in use can't be deleted, only hidden). */
+export function useActivityUsage(id: string | null) {
+  return useQuery({
+    queryKey: ['workouts', 'usage', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('workouts')
+        .select('id', { count: 'exact', head: true })
+        .eq('activity_id', id!)
+      if (error) throw new Error(error.message)
+      return count ?? 0
+    },
+  })
+}
+
 export function useFoods() {
   return useQuery({
     queryKey: ['foods'],
     queryFn: async () => must(await supabase.from('foods').select('*').order('name')),
     staleTime: Infinity,
+  })
+}
+
+export function useSavedMeals() {
+  return useQuery({
+    queryKey: ['saved_meals'],
+    queryFn: async () => must(await supabase.from('saved_meals').select('*').order('name')),
   })
 }
 
@@ -163,9 +186,10 @@ export function useDeleteWorkout() {
 }
 
 /** Generic save/delete for the simple CRUD tables. */
-type CrudTable = 'foods' | 'periods' | 'run_plan_weeks' | 'activities'
+type CrudTable = 'foods' | 'periods' | 'run_plan_weeks' | 'activities' | 'saved_meals'
 const crudKey: Record<CrudTable, string> = {
   foods: 'foods',
+  saved_meals: 'saved_meals',
   periods: 'periods',
   run_plan_weeks: 'run_plan',
   activities: 'activities',

@@ -9,6 +9,7 @@ import { Foods } from './pages/Foods'
 import { Genika } from './pages/Genika'
 import { Login } from './pages/Login'
 import { Macros } from './pages/Macros'
+import { Meals } from './pages/Meals'
 import { Monthly } from './pages/Monthly'
 import { Plan } from './pages/Plan'
 import { Running } from './pages/Running'
@@ -33,6 +34,7 @@ export default function App() {
         <Route index element={<Genika />} />
         <Route path="macros" element={<Macros />} />
         <Route path="calculator" element={<Calculator />} />
+        <Route path="meals" element={<Meals />} />
         <Route path="foods" element={<Foods />} />
         <Route path="plan" element={<Plan />} />
         <Route path="running" element={<Running />} />

@@ -1,6 +1,7 @@
-import { Calculator, Copy, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Calculator, Copy, ListPlus, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { SavedMealPicker } from '../components/SavedMealPicker'
 import {
   Button,
   ErrorNote,
@@ -14,11 +15,11 @@ import {
   TextInput,
   Widget,
 } from '../components/ui'
-import { useCopyMeals, useDeleteMeal, useMeals, usePeriods, useSaveMeal } from '../lib/api'
-import type { MealEntry, MealSlot } from '../lib/database.types'
+import { useCopyMeals, useDeleteMeal, useFoods, useMeals, usePeriods, useSaveMeal } from '../lib/api'
+import type { Json, MealEntry, MealSlot } from '../lib/database.types'
 import { addDays, relativeDayLabel, type ISODate } from '../lib/dates'
 import { num } from '../lib/format'
-import { calculatorEntryFor, itemsOf, SLOTS, slotLabel } from '../lib/meals'
+import { entryFromRecipe, itemsOf, SLOTS, slotLabel } from '../lib/meals'
 import { useDateParam } from '../lib/useDateParam'
 import { useSwipe } from '../lib/useSwipe'
 
@@ -38,10 +39,12 @@ export function Macros() {
     return () => clearTimeout(t)
   }, [confirmDelete])
 
-  const openCalculator = (slot: MealSlot, entries: MealEntry[]) => {
-    const target = calculatorEntryFor(entries, slot)
-    navigate(target ? `/calculator?entry=${target.id}` : `/calculator?slot=${slot}&d=${date}`)
-  }
+  // The calculator always starts a new entry; logged meals are edited by tapping them below.
+  const openCalculator = (slot: MealSlot) => navigate(`/calculator?slot=${slot}&d=${date}`)
+  // Inserting a saved meal (ΓΕΥΜΑΤΑ) logs one serving of it, priced with today's food values.
+  const foods = useFoods().data ?? []
+  const insertMeal = useSaveMeal()
+  const [inserting, setInserting] = useState<MealSlot | null>(null)
   const period = usePeriods().data?.find((p) => p.start_date <= date && p.end_date >= date)
   const [editing, setEditing] = useState<{ slot: MealSlot; entry?: MealEntry } | null>(null)
   const navigate = useNavigate()
@@ -128,7 +131,7 @@ export function Macros() {
                 key={s.value}
                 title={s.value === 'snack' && entries.length ? `${s.label} (${entries.length})` : s.label}
                 icon={<span className="block size-2.5 rounded-full" style={{ background: s.color }} />}
-                onClick={() => openCalculator(s.value, entries)}
+                onClick={() => openCalculator(s.value)}
                 action={
                   <div className="flex gap-1">
                     {s.value !== 'snack' && (
@@ -152,6 +155,19 @@ export function Macros() {
                     )}
                     <button
                       type="button"
+                      aria-label="Από αποθηκευμένα γεύματα"
+                      title="Από αποθηκευμένα γεύματα"
+                      className="grid size-8 place-items-center rounded-full bg-surface-2 text-muted transition hover:bg-line hover:text-text active:scale-90"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        insertMeal.reset()
+                        setInserting(s.value)
+                      }}
+                    >
+                      <ListPlus size={16} />
+                    </button>
+                    <button
+                      type="button"
                       aria-label="Προσθήκη"
                       className="grid size-8 place-items-center rounded-full bg-surface-2 text-muted transition hover:bg-line hover:text-text active:scale-90"
                       onClick={(e) => {
@@ -167,7 +183,7 @@ export function Macros() {
                       className="grid size-8 place-items-center rounded-full bg-accent text-white transition hover:brightness-110 active:scale-90"
                       onClick={(e) => {
                         e.stopPropagation()
-                        openCalculator(s.value, entries)
+                        openCalculator(s.value)
                       }}
                     >
                       <Calculator size={15} />
@@ -249,6 +265,26 @@ export function Macros() {
           })}
         </div>
       </div>
+
+      <SavedMealPicker
+        open={!!inserting}
+        title={inserting ? `Αποθηκευμένο γεύμα → ${slotLabel(inserting)}` : ''}
+        busy={insertMeal.isPending}
+        error={insertMeal.error}
+        onClose={() => setInserting(null)}
+        onPick={(m) => {
+          const e = entryFromRecipe(itemsOf(m.items), m.servings, foods)
+          insertMeal.mutate(
+            { ...e, date, slot: inserting!, name: m.name, items: e.items as unknown as Json, servings: m.servings },
+            { onSuccess: () => setInserting(null) },
+          )
+        }}
+        footer={
+          <Button variant="ghost" className="w-full" onClick={() => navigate('/meals')}>
+            Διαχείριση γευμάτων
+          </Button>
+        }
+      />
 
       <MealSheet date={date} editing={editing} onClose={() => setEditing(null)} />
     </div>

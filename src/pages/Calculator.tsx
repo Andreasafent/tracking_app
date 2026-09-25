@@ -1,6 +1,9 @@
-import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
+import { BookmarkPlus, Check, ListPlus, Pencil, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
+import { FoodPicker } from '../components/FoodPicker'
+import { Ingredients } from '../components/Ingredients'
+import { SavedMealPicker } from '../components/SavedMealPicker'
 import {
   Button,
   ErrorNote,
@@ -15,19 +18,26 @@ import {
   TextInput,
   Widget,
 } from '../components/ui'
-import { useFoods, useMealEntry, useMeals, useSaveMeal } from '../lib/api'
-import type { Food, Json, MealSlot } from '../lib/database.types'
+import { useFoods, useMealEntry, useSavedMeals, useSaveMeal, useSaveRow } from '../lib/api'
+import type { Json, MealSlot } from '../lib/database.types'
 import { addDays, relativeDayLabel, today } from '../lib/dates'
 import { num } from '../lib/format'
-import { calculatorEntryFor, itemsOf, SLOTS, slotLabel, type MealItem } from '../lib/meals'
+import {
+  addNutrients,
+  itemsOf,
+  itemsOfLines,
+  linesOf,
+  round1,
+  rowsOf,
+  SLOTS,
+  slotLabel,
+  ZERO,
+  type Nutrients,
+  type MealItem,
+  type Row,
+} from '../lib/meals'
 import { useSwipe } from '../lib/useSwipe'
 
-interface Row {
-  foodId: string
-  amount: number | null
-  /** The logged line, kept when its food no longer exists so the meal still adds up. */
-  saved?: MealItem
-}
 interface Draft {
   rows: Row[]
   servings: number
@@ -36,7 +46,9 @@ interface Draft {
 
 const EMPTY: Draft = { rows: [], servings: 1, name: '' }
 
-// The calculator keeps its contents per meal (like the sheet), so it also works as a viewer.
+// An unfinished meal is kept per slot until it's logged or cleared, so leaving the page loses nothing.
+// Logged meals are never loaded back here on their own: each log is a new entry. Editing one is
+// explicit (tapping it in MACROS opens ?entry=<id>).
 function loadDraft(slot: MealSlot): Draft {
   try {
     const raw = localStorage.getItem(`calc:${slot}`)
@@ -52,37 +64,6 @@ function storeDraft(slot: MealSlot, d: Draft) {
     /* storage unavailable */
   }
 }
-
-type Nutrients = { kcal: number; protein: number; carbs: number; fat: number; iron: number; omega3: number }
-const ZERO: Nutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0, iron: 0, omega3: 0 }
-
-function nutrientsOf(food: Food, amount: number): Nutrients {
-  const f = amount / food.per_amount
-  return {
-    kcal: food.kcal * f,
-    protein: food.protein * f,
-    carbs: food.carbs * f,
-    fat: food.fat * f,
-    iron: (food.iron ?? 0) * f,
-    omega3: (food.omega3 ?? 0) * f,
-  }
-}
-
-function nutrientsOfSaved(item: MealItem, amount: number): Nutrients {
-  const f = item.amount ? amount / item.amount : 0
-  return { kcal: item.kcal * f, protein: item.protein * f, carbs: item.carbs * f, fat: item.fat * f, iron: 0, omega3: 0 }
-}
-
-const add = (a: Nutrients, b: Nutrients): Nutrients => ({
-  kcal: a.kcal + b.kcal,
-  protein: a.protein + b.protein,
-  carbs: a.carbs + b.carbs,
-  fat: a.fat + b.fat,
-  iron: a.iron + b.iron,
-  omega3: a.omega3 + b.omega3,
-})
-
-const round1 = (v: number) => Math.round(v * 10) / 10
 
 export function Calculator() {
   const [params, setParams] = useSearchParams()
@@ -101,7 +82,9 @@ export function Calculator() {
   const draftRef = useRef(draft)
   draftRef.current = draft
   const [picker, setPicker] = useState(false)
-  const [logged, setLogged] = useState(false)
+  const [savedPicker, setSavedPicker] = useState(false)
+  const [saveAs, setSaveAs] = useState(false)
+  const [logged, setLogged] = useState<{ kcal: number; slot: MealSlot } | null>(null)
 
   const setParam = (k: string, v: string | null) =>
     setParams(
@@ -113,33 +96,19 @@ export function Calculator() {
       { replace: true },
     )
 
-  // Changing day or slot shows that day/slot's meal (like tapping it in MACROS), never carries
-  // the current ingredients over. `pick` marks the switch until that day's meals have loaded.
-  const pick = params.get('pick') === '1'
-  const dayMeals = useMeals(date)
-  const openSlot = (nextSlot: MealSlot, nextDate: string) =>
+  // Changing day or slot picks where the next log goes (and leaves edit mode).
+  const openSlot = (nextSlot: MealSlot, nextDate: string) => {
+    setLogged(null)
     setParams(
       (p) => {
         p.set('slot', nextSlot)
         p.set('d', nextDate)
         p.delete('entry')
-        p.set('pick', '1')
         return p
       },
       { replace: true },
     )
-  useEffect(() => {
-    if (!pick || !dayMeals.isSuccess) return
-    const target = calculatorEntryFor(dayMeals.data ?? [], slot)
-    setParams(
-      (p) => {
-        p.delete('pick')
-        if (target) p.set('entry', target.id)
-        return p
-      },
-      { replace: true },
-    )
-  }, [pick, dayMeals.isSuccess, dayMeals.data, slot])
+  }
 
   const [dir, setDir] = useState<'next' | 'prev' | null>(null)
   const go = (days: number) => {
@@ -164,11 +133,7 @@ export function Calculator() {
     const e = entry.data
     if (!e || !foodsQ.isSuccess || loadedFor.current === e.id) return
     loadedFor.current = e.id
-    const rows = itemsOf(e.items).map((it): Row => {
-      const food = (it.foodId && foodById.get(it.foodId)) || foods.find((f) => f.name === it.food)
-      return food ? { foodId: food.id, amount: it.amount } : { foodId: '', amount: it.amount, saved: it }
-    })
-    setDraft({ rows, servings: e.servings ?? 1, name: e.name ?? '' })
+    setDraft({ rows: rowsOf(itemsOf(e.items), foods), servings: e.servings ?? 1, name: e.name ?? '' })
     setParams(
       (p) => {
         p.set('slot', e.slot)
@@ -183,50 +148,42 @@ export function Calculator() {
     draftRef.current = d
     setDraft(d)
     if (!editing) storeDraft(slot, d)
-    setLogged(false)
+    setLogged(null)
   }
 
-  const lines = draft.rows.map((r) => {
-    const food = foodById.get(r.foodId)
-    const n = !r.amount ? ZERO : food ? nutrientsOf(food, r.amount) : r.saved ? nutrientsOfSaved(r.saved, r.amount) : ZERO
-    return { ...r, food, n, name: food?.name ?? r.saved?.food ?? '(διαγραμμένο)', unit: food?.unit ?? r.saved?.unit ?? 'g' }
-  })
-  const totals = lines.reduce((a, l) => add(a, l.n), ZERO)
+  const lines = linesOf(draft.rows, foodById)
+  const totals = lines.reduce((a, l) => addNutrients(a, l.n), ZERO)
   const servings = Math.max(1, draft.servings || 1)
   const per = Object.fromEntries(Object.entries(totals).map(([k, v]) => [k, v / servings])) as Nutrients
 
   function log() {
     // The whole recipe is stored; the entry's own numbers are per serving.
-    const items: MealItem[] = lines
-      .filter((l) => l.amount && (l.food || l.saved))
-      .map((l) => ({
-        foodId: l.food?.id,
-        food: l.name,
-        amount: l.amount!,
-        unit: l.unit,
-        kcal: round1(l.n.kcal),
-        protein: round1(l.n.protein),
-        carbs: round1(l.n.carbs),
-        fat: round1(l.n.fat),
-      }))
+    const kcal = Math.round(per.kcal)
     save.mutate(
       {
         id: entryId ?? undefined,
         date,
         slot,
         name: draft.name || null,
-        kcal: Math.round(per.kcal),
+        kcal,
         protein: round1(per.protein),
         carbs: round1(per.carbs),
         fat: round1(per.fat),
-        items: items as unknown as Json,
+        items: itemsOfLines(lines) as unknown as Json,
         servings,
       },
-      { onSuccess: () => (editing ? navigate(`/macros?d=${date}`, { replace: true }) : setLogged(true)) },
+      {
+        onSuccess: () => {
+          if (editing) return navigate(`/macros?d=${date}`, { replace: true })
+          // Start empty for the next meal (e.g. a second lunch item).
+          update(EMPTY)
+          setLogged({ kcal, slot })
+        },
+      },
     )
   }
 
-  if (pick || (editing && (entry.isLoading || (entry.data && loadedFor.current !== entry.data.id)))) return <Loading />
+  if (editing && (entry.isLoading || (entry.data && loadedFor.current !== entry.data.id))) return <Loading />
 
   return (
     <div className="min-h-[calc(100dvh-4rem)] space-y-3" {...swipe}>
@@ -283,49 +240,23 @@ export function Calculator() {
         </div>
       </Widget>
 
-      <Widget
-        title="Υλικά"
-        action={
+      <Ingredients
+        lines={lines}
+        onAdd={() => setPicker(true)}
+        onAmount={(i, v) => update({ ...draft, rows: draft.rows.map((r, j) => (j === i ? { ...r, amount: v } : r)) })}
+        onRemove={(i) => update({ ...draft, rows: draft.rows.filter((_, j) => j !== i) })}
+        actions={
           <button
             type="button"
-            className="grid size-8 place-items-center rounded-full bg-accent text-white transition hover:brightness-110 active:scale-90"
-            aria-label="Προσθήκη τροφίμου"
-            onClick={() => setPicker(true)}
+            aria-label="Από αποθηκευμένα γεύματα"
+            title="Από αποθηκευμένα γεύματα"
+            className="grid size-8 place-items-center rounded-full bg-surface-2 text-muted transition hover:bg-line hover:text-text active:scale-90"
+            onClick={() => setSavedPicker(true)}
           >
-            <Plus size={16} />
+            <ListPlus size={16} />
           </button>
         }
       >
-        {lines.length === 0 ? (
-          <div className="py-4 text-center text-sm text-muted">Πρόσθεσε τρόφιμα με το +</div>
-        ) : (
-          <ul className="divide-y divide-line">
-            {lines.map((l, i) => (
-              <li key={i} className="flex items-center gap-2 py-2">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold">{l.name}</div>
-                  <div className="text-xs text-muted">
-                    {num(l.n.kcal, 0)} kcal · Π {num(l.n.protein, 1)} · Υ {num(l.n.carbs, 1)} · Λ {num(l.n.fat, 1)}
-                  </div>
-                </div>
-                <NumberInput
-                  value={l.amount}
-                  step={l.unit === 'piece' ? 1 : 10}
-                  unit={l.unit === 'piece' ? 'τεμ' : 'g'}
-                  onChange={(v) => update({ ...draft, rows: draft.rows.map((r, j) => (j === i ? { ...r, amount: v } : r)) })}
-                />
-                <button
-                  type="button"
-                  aria-label="Αφαίρεση"
-                  className="text-muted transition hover:text-bad active:scale-90"
-                  onClick={() => update({ ...draft, rows: draft.rows.filter((_, j) => j !== i) })}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
         <div className="mt-2 border-t border-line pt-1">
           <Field label="Μερίδες" hint="Π.χ. meal prep για 3 μέρες">
             <NumberInput value={draft.servings} integer step={1} min={1} onChange={(v) => update({ ...draft, servings: v ?? 1 })} />
@@ -334,7 +265,21 @@ export function Calculator() {
             <TextInput value={draft.name} onChange={(v) => update({ ...draft, name: v })} placeholder="Όνομα γεύματος (προαιρετικό)" />
           </div>
         </div>
-      </Widget>
+      </Ingredients>
+
+      {logged && (
+        <button
+          type="button"
+          onClick={() => navigate(`/macros?d=${date}`)}
+          className="anim-fade flex w-full items-center gap-2 rounded-2xl bg-good/15 px-4 py-3 text-left text-sm font-semibold text-good transition hover:bg-good/25"
+        >
+          <Check size={16} />
+          <span className="flex-1">
+            Καταχωρήθηκαν {num(logged.kcal, 0)} kcal στο {slotLabel(logged.slot)}
+          </span>
+          <span className="text-xs">προβολή MACROS →</span>
+        </button>
+      )}
 
       <div className="flex gap-2">
         {editing ? (
@@ -346,16 +291,32 @@ export function Calculator() {
             Καθαρισμός
           </Button>
         )}
-        {logged ? (
-          <Button className="flex-1" variant="ghost" onClick={() => navigate(`/macros?d=${date}`)}>
-            <Check size={16} /> Καταχωρήθηκε — προβολή MACROS
-          </Button>
-        ) : (
-          <Button className="flex-1" disabled={per.kcal <= 0 || save.isPending} onClick={log}>
-            {editing ? 'Αποθήκευση αλλαγών' : `Log to ${slotLabel(slot)}`}
-          </Button>
-        )}
+        <Button variant="ghost" disabled={!lines.length} onClick={() => setSaveAs(true)}>
+          <BookmarkPlus size={16} />
+          <span className="sr-only">Αποθήκευση ως γεύμα</span>
+        </Button>
+        <Button className="flex-1" disabled={per.kcal <= 0 || save.isPending} onClick={log}>
+          {editing ? 'Αποθήκευση αλλαγών' : `Log to ${slotLabel(slot)}`}
+        </Button>
       </div>
+
+      <SavedMealPicker
+        open={savedPicker}
+        title="Φόρτωση αποθηκευμένου γεύματος"
+        onClose={() => setSavedPicker(false)}
+        onPick={(m) => {
+          update({ rows: rowsOf(itemsOf(m.items), foods), servings: m.servings, name: m.name })
+          setSavedPicker(false)
+        }}
+      />
+
+      <SaveAsSheet
+        open={saveAs}
+        onClose={() => setSaveAs(false)}
+        initialName={draft.name}
+        items={itemsOfLines(lines)}
+        servings={servings}
+      />
 
       <FoodPicker
         open={picker}
@@ -373,119 +334,45 @@ export function Calculator() {
   )
 }
 
-const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
-// Phones: don't pop the keyboard when the picker opens. Mouse/trackpad: focus search right away.
-const finePointer = () => typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches
-
-/** Stays open so several ingredients can be added in a row; ↑/↓ + Enter pick without the mouse. */
-function FoodPicker(props: {
-  open: boolean
-  foods: Food[]
-  onClose: () => void
-  onPick: (f: Food) => void
-  onNewFood: (name: string) => void
-}) {
-  const [q, setQ] = useState('')
-  const [active, setActive] = useState(0)
-  const [added, setAdded] = useState<string | null>(null)
-  const list = props.foods.filter((f) => norm(f.name).includes(norm(q)))
-
+/** Saves the calculator's ingredients as a meal in ΓΕΥΜΑΤΑ (same name → that meal is updated). */
+function SaveAsSheet(props: { open: boolean; onClose: () => void; initialName: string; items: MealItem[]; servings: number }) {
+  const saved = useSavedMeals().data ?? []
+  const save = useSaveRow('saved_meals')
+  const [name, setName] = useState('')
   useEffect(() => {
     if (props.open) {
-      setQ('')
-      setAdded(null)
+      setName(props.initialName)
+      save.reset()
     }
   }, [props.open])
-  useEffect(() => setActive(0), [q])
-
-  function pick(f: Food) {
-    props.onPick(f)
-    setQ('')
-    setAdded(f.name)
-  }
-
-  // Arrow keys work whether or not the search field has focus.
-  useEffect(() => {
-    if (!props.open) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault()
-        setActive((i) => {
-          const n = list.length
-          if (!n) return 0
-          return e.key === 'ArrowDown' ? (i + 1) % n : (i - 1 + n) % n
-        })
-      } else if (e.key === 'Enter' && list[active]) {
-        e.preventDefault()
-        pick(list[active])
-      }
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  })
-
-  useEffect(() => {
-    document.getElementById(`food-opt-${active}`)?.scrollIntoView({ block: 'nearest' })
-  }, [active])
+  const existing = saved.find((m) => m.name.trim().toLowerCase() === name.trim().toLowerCase())
 
   return (
     <Sheet
       open={props.open}
       onClose={props.onClose}
-      title="Επιλογή τροφίμου"
+      title="Αποθήκευση ως γεύμα"
       footer={
-        <div className="flex gap-2">
-          <Button variant="ghost" onClick={() => props.onNewFood(q)}>
-            <Plus size={16} /> Νέο τρόφιμο
-          </Button>
-          <Button className="flex-1" onClick={props.onClose}>
-            Τέλος
-          </Button>
-        </div>
+        <Button
+          className="w-full"
+          disabled={!name.trim() || save.isPending}
+          onClick={() =>
+            save.mutate(
+              { id: existing?.id, name: existing?.name ?? name.trim(), items: props.items as unknown as Json, servings: props.servings },
+              { onSuccess: props.onClose },
+            )
+          }
+        >
+          {existing ? `Ενημέρωση «${existing.name}»` : 'Αποθήκευση'}
+        </Button>
       }
     >
-      <div className="relative mb-2">
-        <Search size={16} className="absolute top-3.5 left-3 text-muted" />
-        <input
-          autoFocus={finePointer()}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Αναζήτηση…"
-          className="h-11 w-full rounded-xl bg-surface-2 pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
-        />
-      </div>
-      {added && (
-        <div className="anim-fade mb-2 flex items-center gap-1.5 text-xs font-semibold text-good">
-          <Check size={14} /> Προστέθηκε: {added}
-        </div>
-      )}
-      <ul role="listbox" className="divide-y divide-line">
-        {list.map((f, i) => (
-          <li key={f.id} id={`food-opt-${i}`} role="option" aria-selected={i === active}>
-            <button
-              type="button"
-              onClick={() => pick(f)}
-              onMouseEnter={() => setActive(i)}
-              className={`-mx-2 flex w-[calc(100%+1rem)] items-center justify-between rounded-xl px-2 py-3 text-left transition ${
-                i === active ? 'bg-surface-2' : ''
-              }`}
-            >
-              <span className="text-sm font-semibold">{f.name}</span>
-              <span className="text-xs text-muted">
-                {num(f.kcal, 0)} kcal / {f.unit === 'piece' ? `${num(f.per_amount)} τεμ` : `${num(f.per_amount)}g`}
-              </span>
-            </button>
-          </li>
-        ))}
-        {list.length === 0 && (
-          <li className="py-6 text-center text-sm text-muted">
-            Δεν βρέθηκε.{' '}
-            <button type="button" className="font-semibold text-accent hover:underline" onClick={() => props.onNewFood(q)}>
-              Πρόσθεσε «{q}»
-            </button>
-          </li>
-        )}
-      </ul>
+      <ErrorNote error={save.error} />
+      <TextInput value={name} onChange={setName} placeholder="Όνομα (π.χ. Κοτόπουλο με ρύζι)" />
+      <p className="mt-3 text-xs text-muted">
+        {props.items.length} υλικά · {num(props.servings, 0)} {props.servings === 1 ? 'μερίδα' : 'μερίδες'}. Θα εμφανίζεται στα
+        ΓΕΥΜΑΤΑ και στο MACROS για γρήγορη προσθήκη.
+      </p>
     </Sheet>
   )
 }
