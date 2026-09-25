@@ -99,7 +99,7 @@ export function Widget(props: {
     <section
       {...clickable}
       className={clsx(
-        'block w-full rounded-3xl bg-surface p-4 text-left',
+        'block w-full min-w-0 rounded-3xl bg-surface p-4 text-left',
         props.onClick &&
           'cursor-pointer transition duration-200 outline-none hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 hover:ring-1 hover:ring-line focus-visible:ring-2 focus-visible:ring-accent active:translate-y-0 active:scale-[0.99]',
         props.className,

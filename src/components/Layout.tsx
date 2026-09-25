@@ -109,7 +109,7 @@ export function Layout() {
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-5xl px-4 pb-[max(2rem,env(safe-area-inset-bottom))] lg:px-8 lg:py-6">
+      <main className="mx-auto w-full min-w-0 max-w-5xl overflow-x-clip px-4 pb-[max(2rem,env(safe-area-inset-bottom))] lg:px-8 lg:py-6">
         {/* Desktop top bar (mobile has its own header above) */}
         <div className="mb-2 hidden h-9 items-center gap-2 lg:flex">
           <BackButton />
