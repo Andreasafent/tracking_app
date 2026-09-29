@@ -1,13 +1,14 @@
-import { Activity, Brain, Calculator, ChevronRight, Dumbbell, HeartPulse, Plus, Ruler, Salad, Scale as ScaleIcon } from 'lucide-react'
+import { Activity, Brain, Calculator, ChevronRight, Dumbbell, HeartPulse, Plus, Ruler, Salad, Scale as ScaleIcon, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { GroupSheet, type GroupKey } from '../components/DailyFields'
 import { WorkoutSheet } from '../components/WorkoutSheet'
 import { Chip, ErrorNote, Grid, Hero, MacroRing, QuickAction, QuickActions, Stat, Stepper, Widget } from '../components/ui'
-import { useActivities, useDailyLog, usePeriods, useSummaries, useWorkouts } from '../lib/api'
+import { useActivities, useDailyLog, usePeriods, useSummaries, useTrainingPlans, useWorkouts } from '../lib/api'
 import { addDays, relativeDayLabel, today } from '../lib/dates'
 import { num, signed } from '../lib/format'
 import { weight7 } from '../lib/stats'
+import { intakeTarget } from '../lib/training'
 import { useDateParam } from '../lib/useDateParam'
 import { useSwipe } from '../lib/useSwipe'
 
@@ -34,9 +35,10 @@ export function Genika() {
   const s = rows.find((r) => r.date === date)
   const w7 = weight7(rows, date)
 
-  // Days with no data yet have no summary row, so fall back to the period covering the date.
   const period = usePeriods().data?.find((p) => p.start_date <= date && p.end_date >= date)
-  const target = s?.target_intake ?? period?.target_intake ?? null
+  // Training plan's target for the day → MARATHON BLOCK period → none (shown as a warning).
+  const intake = intakeTarget(date, useTrainingPlans().data ?? [], period)
+  const target = intake.kcal
   const remaining = target == null ? null : target - (s?.kcal ?? 0)
   const q = date === today() ? '' : `?d=${date}`
 
@@ -53,8 +55,20 @@ export function Genika() {
         unit="kcal"
         sub={
           <>
-            {num(s?.kcal ?? 0, 0)} / {num(target, 0)} kcal · ΒΑΡΟΣ 7ημ{' '}
+            {num(s?.kcal ?? 0, 0)} / <span className={target == null ? 'font-semibold text-warn' : undefined}>{num(target, 0)}</span> kcal
+            {intake.source === 'training' && ' (training plan)'} · ΒΑΡΟΣ 7ημ{' '}
             <b className="text-text">{num(w7, 2)} kg</b>
+            {target == null && (
+              <button
+                type="button"
+                onClick={() => navigate('/training')}
+                className="mx-auto mt-2 flex items-center gap-1 rounded-full bg-warn/15 px-3 py-1 text-xs font-semibold text-warn transition hover:bg-warn/25"
+              >
+                <TriangleAlert size={14} />
+                Δεν υπάρχει στόχος θερμίδων για αυτή τη μέρα
+                <ChevronRight size={14} />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => navigate('/plan')}

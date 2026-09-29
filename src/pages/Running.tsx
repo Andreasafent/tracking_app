@@ -2,7 +2,7 @@ import clsx from 'clsx'
 import { Footprints, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { TrendChart } from '../components/Charts'
-import { Bar, Button, ErrorNote, Field, Hero, NumberInput, QuickAction, QuickActions, Sheet, TextInput, Widget } from '../components/ui'
+import { Bar, Button, DateInput, ErrorNote, Field, Hero, NumberInput, QuickAction, QuickActions, Sheet, TextInput, Widget } from '../components/ui'
 import { useDeleteRow, useRunPlan, useSaveRow, useSummaries } from '../lib/api'
 import type { DailySummary, RunPlanWeek } from '../lib/database.types'
 import { addDays, fmtRange, today } from '../lib/dates'
@@ -169,10 +169,10 @@ function WeekSheet(props: { week: Partial<RunPlanWeek> | null; onClose: () => vo
         <NumberInput value={w.week_no} integer onChange={(v) => set('week_no', v == null ? null : Math.round(v))} />
       </Field>
       <Field label="Από">
-        <input type="date" value={w.start_date ?? ''} onChange={(e) => set('start_date', e.target.value)} className="h-10 rounded-xl bg-surface-2 px-3 text-sm font-semibold" />
+        <DateInput value={w.start_date} onChange={(v) => set('start_date', v)} />
       </Field>
       <Field label="Έως">
-        <input type="date" value={w.end_date ?? ''} onChange={(e) => set('end_date', e.target.value)} className="h-10 rounded-xl bg-surface-2 px-3 text-sm font-semibold" />
+        <DateInput value={w.end_date} onChange={(v) => set('end_date', v)} />
       </Field>
       <Field label="Στόχος km">
         <NumberInput value={w.target_km} onChange={(v) => set('target_km', v)} unit="km" />

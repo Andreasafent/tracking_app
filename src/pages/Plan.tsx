@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Bar, Button, ErrorNote, Field, Hero, NumberInput, QuickAction, QuickActions, Sheet, Stat, TextInput, Widget } from '../components/ui'
+import { Bar, Button, DateInput, ErrorNote, Field, Hero, NumberInput, QuickAction, QuickActions, Sheet, Stat, TextInput, Widget } from '../components/ui'
 import { useDeleteRow, usePeriods, useSaveRow, useSummaries } from '../lib/api'
 import type { Period } from '../lib/database.types'
 import { addDays, diffDays, fmtRange, today } from '../lib/dates'
@@ -185,20 +185,10 @@ function PeriodSheet(props: { period: Partial<Period> | null; onClose: () => voi
       <ErrorNote error={err} />
       <TextInput value={p.label ?? ''} onChange={(v) => set('label', v)} placeholder="Όνομα (π.χ. Marathon build)" />
       <Field label="Από">
-        <input
-          type="date"
-          value={p.start_date ?? ''}
-          onChange={(e) => set('start_date', e.target.value)}
-          className="h-10 rounded-xl bg-surface-2 px-3 text-sm font-semibold"
-        />
+        <DateInput value={p.start_date} onChange={(v) => set('start_date', v)} />
       </Field>
       <Field label="Έως">
-        <input
-          type="date"
-          value={p.end_date ?? ''}
-          onChange={(e) => set('end_date', e.target.value)}
-          className="h-10 rounded-xl bg-surface-2 px-3 text-sm font-semibold"
-        />
+        <DateInput value={p.end_date} onChange={(v) => set('end_date', v)} />
       </Field>
       <Field label="Στόχος θερμίδων" hint="TARGET INTAKE">
         <NumberInput value={p.target_intake} integer onChange={(v) => set('target_intake', v == null ? null : Math.round(v))} unit="kcal" />

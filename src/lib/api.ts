@@ -95,6 +95,13 @@ export function usePeriods() {
   })
 }
 
+export function useTrainingPlans() {
+  return useQuery({
+    queryKey: ['training_plans'],
+    queryFn: async () => must(await supabase.from('training_plans').select('*').order('start_date')),
+  })
+}
+
 export function useRunPlan() {
   return useQuery({
     queryKey: ['run_plan'],
@@ -186,12 +193,13 @@ export function useDeleteWorkout() {
 }
 
 /** Generic save/delete for the simple CRUD tables. */
-type CrudTable = 'foods' | 'periods' | 'run_plan_weeks' | 'activities' | 'saved_meals'
+type CrudTable = 'foods' | 'periods' | 'run_plan_weeks' | 'activities' | 'saved_meals' | 'training_plans'
 const crudKey: Record<CrudTable, string> = {
   foods: 'foods',
   saved_meals: 'saved_meals',
   periods: 'periods',
   run_plan_weeks: 'run_plan',
+  training_plans: 'training_plans',
   activities: 'activities',
 }
 

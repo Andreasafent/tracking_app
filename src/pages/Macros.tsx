@@ -1,4 +1,4 @@
-import { Calculator, Copy, ListPlus, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Calculator, ChevronRight, Copy, ListPlus, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { SavedMealPicker } from '../components/SavedMealPicker'
@@ -15,11 +15,12 @@ import {
   TextInput,
   Widget,
 } from '../components/ui'
-import { useCopyMeals, useDeleteMeal, useFoods, useMeals, usePeriods, useSaveMeal } from '../lib/api'
+import { useCopyMeals, useDeleteMeal, useFoods, useMeals, usePeriods, useSaveMeal, useTrainingPlans } from '../lib/api'
 import type { Json, MealEntry, MealSlot } from '../lib/database.types'
 import { addDays, relativeDayLabel, type ISODate } from '../lib/dates'
 import { num } from '../lib/format'
 import { entryFromRecipe, itemsOf, SLOTS, slotLabel } from '../lib/meals'
+import { intakeTarget } from '../lib/training'
 import { useDateParam } from '../lib/useDateParam'
 import { useSwipe } from '../lib/useSwipe'
 
@@ -59,7 +60,9 @@ export function Macros() {
 
   const rows = meals.data ?? []
   const kcal = total(rows, 'kcal')
-  const target = period?.target_intake ?? null
+  // Training plan's target for the day → MARATHON BLOCK period → none (shown as a warning).
+  const intake = intakeTarget(date, useTrainingPlans().data ?? [], period)
+  const target = intake.kcal
   const remaining = target == null ? null : target - kcal
 
   return (
@@ -75,10 +78,19 @@ export function Macros() {
         unit="kcal"
         sub={
           target == null ? (
-            'Δεν υπάρχει περίοδος για αυτή τη μέρα'
+            <button
+              type="button"
+              onClick={() => navigate('/training')}
+              className="mx-auto flex items-center gap-1 rounded-full bg-warn/15 px-3 py-1 text-xs font-semibold text-warn transition hover:bg-warn/25"
+            >
+              <TriangleAlert size={14} />
+              Δεν υπάρχει στόχος θερμίδων για αυτή τη μέρα
+              <ChevronRight size={14} />
+            </button>
           ) : (
             <>
-              στόχος {num(target, 0)} ·{' '}
+              στόχος {num(target, 0)}
+              {intake.source === 'training' && ' (training plan)'} ·{' '}
               <b className={remaining! < 0 ? 'text-bad' : 'text-good'}>
                 {remaining! < 0 ? `+${num(-remaining!, 0)} πάνω` : `${num(remaining, 0)} απομένουν`}
               </b>

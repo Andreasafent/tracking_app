@@ -97,6 +97,23 @@ export function fmtShort(s: ISODate): string {
   return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`
 }
 
+/** 'YYYY-MM-DD' → 'dd/mm/yyyy'. */
+export function fmtDMY(s: ISODate): string {
+  const [y, m, d] = s.split('-')
+  return `${d}/${m}/${y}`
+}
+
+const DAYS_SHORT = ['Κυρ', 'Δευ', 'Τρι', 'Τετ', 'Πεμ', 'Παρ', 'Σαβ']
+
+/** 'Δευ 28/09/2026' */
+export function fmtDayDMY(s: ISODate): string {
+  return `${DAYS_SHORT[parseISO(s).getDay()]} ${fmtDMY(s)}`
+}
+
+export function fmtRangeDMY(r: Range): string {
+  return `${fmtDMY(r.from)} – ${fmtDMY(r.to)}`
+}
+
 export function fmtRange(r: Range): string {
   return `${fmtShort(r.from)} – ${fmtShort(r.to)}`
 }

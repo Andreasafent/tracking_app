@@ -1,6 +1,7 @@
 import clsx from 'clsx'
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
+import { fmtDMY } from '../lib/dates'
 import { num, parseNum } from '../lib/format'
 
 // ─── Hero: the big "balance" value at the top of every page
@@ -495,6 +496,32 @@ export function Segmented<T extends string>(props: {
         </button>
       ))}
     </div>
+  )
+}
+
+/**
+ * Date field shown as dd/mm/yyyy whatever the browser locale. A transparent native date input
+ * sits on top so tapping anywhere opens the system date picker.
+ */
+export function DateInput(props: { value: string | null | undefined; onChange: (v: string) => void }) {
+  return (
+    <span className="relative inline-flex h-10 items-center gap-2 rounded-xl bg-surface-2 px-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-accent">
+      <span className={clsx('tabular-nums', !props.value && 'text-muted')}>{props.value ? fmtDMY(props.value) : 'ηη/μμ/εεεε'}</span>
+      <CalendarDays size={16} className="text-muted" />
+      <input
+        type="date"
+        value={props.value ?? ''}
+        onChange={(e) => props.onChange(e.target.value)}
+        onClick={(e) => {
+          try {
+            e.currentTarget.showPicker()
+          } catch {
+            // Older browsers: the native control handles the tap itself.
+          }
+        }}
+        className="absolute inset-0 h-full w-full opacity-0"
+      />
+    </span>
   )
 }
 

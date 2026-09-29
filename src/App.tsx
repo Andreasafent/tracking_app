@@ -12,6 +12,7 @@ import { Macros } from './pages/Macros'
 import { Meals } from './pages/Meals'
 import { Monthly } from './pages/Monthly'
 import { Plan } from './pages/Plan'
+import { Training } from './pages/Training'
 import { Running } from './pages/Running'
 import { SettingsPage } from './pages/Settings'
 import { Weekly } from './pages/Weekly'
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="meals" element={<Meals />} />
         <Route path="foods" element={<Foods />} />
         <Route path="plan" element={<Plan />} />
+        <Route path="training" element={<Training />} />
         <Route path="running" element={<Running />} />
         <Route path="weekly" element={<Weekly />} />
         <Route path="monthly" element={<Monthly />} />

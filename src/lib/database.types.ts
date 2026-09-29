@@ -114,6 +114,16 @@ type SavedMealRow = {
   user_id: string
 }
 
+type TrainingPlanRow = {
+  created_at: string
+  days: Json
+  end_date: string
+  id: string
+  label: string | null
+  start_date: string
+  user_id: string
+}
+
 type WorkoutRow = {
   activity_id: string
   created_at: string
@@ -202,6 +212,7 @@ export type Database = {
       periods: Table<PeriodRow, 'start_date' | 'end_date' | 'target_intake' | 'burn_estimate'>
       run_plan_weeks: Table<RunPlanWeekRow, 'week_no' | 'start_date' | 'end_date'>
       saved_meals: Table<SavedMealRow, 'name'>
+      training_plans: Table<TrainingPlanRow, 'start_date' | 'end_date'>
       workouts: Table<
         WorkoutRow,
         'date' | 'activity_id',
@@ -232,6 +243,7 @@ export type MealEntry = MealEntryRow
 export type Period = PeriodRow
 export type RunPlanWeek = RunPlanWeekRow
 export type SavedMeal = SavedMealRow
+export type TrainingPlan = TrainingPlanRow
 export type Workout = WorkoutRow
 export type DailySummary = DailySummaryRow
 export type { MealSlot }
