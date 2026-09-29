@@ -102,6 +102,36 @@ export function useTrainingPlans() {
   })
 }
 
+export function useExercises() {
+  return useQuery({
+    queryKey: ['exercises'],
+    queryFn: async () => must(await supabase.from('exercises').select('*').order('name')),
+  })
+}
+
+/** Every strength log, oldest first (single user, so the whole history is small). */
+export function useExerciseLogs() {
+  return useQuery({
+    queryKey: ['exercise_logs'],
+    queryFn: async () => must(await supabase.from('exercise_logs').select('*').order('date')),
+  })
+}
+
+export function usePbDistances() {
+  return useQuery({
+    queryKey: ['pb_distances'],
+    queryFn: async () => must(await supabase.from('pb_distances').select('*').order('meters')),
+  })
+}
+
+/** Every distance effort and race, oldest first. */
+export function useDistanceEfforts() {
+  return useQuery({
+    queryKey: ['distance_efforts'],
+    queryFn: async () => must(await supabase.from('distance_efforts').select('*').order('date').order('created_at')),
+  })
+}
+
 export function useRunPlan() {
   return useQuery({
     queryKey: ['run_plan'],
@@ -111,7 +141,7 @@ export function useRunPlan() {
 
 // ─── Mutations. Every write invalidates the summaries, since they're all derived.
 
-function useWrite<V>(fn: (v: V) => Promise<unknown>, keys: string[]) {
+function useWrite<V, R = unknown>(fn: (v: V) => Promise<R>, keys: string[]) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: fn,
@@ -192,14 +222,60 @@ export function useDeleteWorkout() {
   return useWrite(async (id: string) => must(await supabase.from('workouts').delete().eq('id', id)), ['workouts'])
 }
 
+/** Creates an exercise and returns it, so its first log can be saved right after. */
+export function useCreateExercise() {
+  return useWrite(
+    async (v: Insert<'exercises'>) => must(await supabase.from('exercises').insert(v).select().single()),
+    ['exercises'],
+  )
+}
+
+/** One log per exercise per day: saving a day again corrects it, other days stay as history. */
+export function useSaveExerciseLog() {
+  return useWrite(
+    async (v: Insert<'exercise_logs'>) =>
+      must(await supabase.from('exercise_logs').upsert(v, { onConflict: 'exercise_id,date' })),
+    ['exercise_logs'],
+  )
+}
+
+/** Creates one distance and returns it (a race on a custom distance needs its id). */
+export function useCreateDistance() {
+  return useWrite(
+    async (v: Insert<'pb_distances'>) => must(await supabase.from('pb_distances').insert(v).select().single()),
+    ['pb_distances'],
+  )
+}
+
+export function useAddDistances() {
+  return useWrite(
+    async (v: Insert<'pb_distances'>[]) => must(await supabase.from('pb_distances').insert(v)),
+    ['pb_distances'],
+  )
+}
+
 /** Generic save/delete for the simple CRUD tables. */
-type CrudTable = 'foods' | 'periods' | 'run_plan_weeks' | 'activities' | 'saved_meals' | 'training_plans'
+type CrudTable =
+  | 'foods'
+  | 'periods'
+  | 'run_plan_weeks'
+  | 'activities'
+  | 'saved_meals'
+  | 'training_plans'
+  | 'exercises'
+  | 'exercise_logs'
+  | 'pb_distances'
+  | 'distance_efforts'
 const crudKey: Record<CrudTable, string> = {
   foods: 'foods',
   saved_meals: 'saved_meals',
   periods: 'periods',
   run_plan_weeks: 'run_plan',
   training_plans: 'training_plans',
+  exercises: 'exercises',
+  exercise_logs: 'exercise_logs',
+  pb_distances: 'pb_distances',
+  distance_efforts: 'distance_efforts',
   activities: 'activities',
 }
 

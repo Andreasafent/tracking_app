@@ -22,6 +22,8 @@ export interface Series {
   color: string // a --series-N var
   digits?: number
   unit?: string
+  /** Custom value text (e.g. race times); overrides digits/unit in the tooltip. */
+  format?: (v: number) => string
 }
 
 const axis = { fontSize: 11, fill: 'var(--muted)' }
@@ -38,8 +40,14 @@ function Tip(props: { active?: boolean; label?: string; payload?: { dataKey: str
             <span className="size-2 rounded-full" style={{ background: s.color }} />
             <span className="text-muted">{s.label}</span>
             <b className="ml-auto pl-3">
-              {num(p?.value ?? null, s.digits ?? 0)}
-              {s.unit ? ` ${s.unit}` : ''}
+              {s.format && p?.value != null ? (
+                s.format(p.value)
+              ) : (
+                <>
+                  {num(p?.value ?? null, s.digits ?? 0)}
+                  {s.unit ? ` ${s.unit}` : ''}
+                </>
+              )}
             </b>
           </div>
         )
@@ -71,6 +79,10 @@ export function TrendChart(props: {
   reference?: { y: number; label: string }
   domain?: [number | 'auto' | 'dataMin' | 'dataMax', number | 'auto' | 'dataMin' | 'dataMax']
   footer?: ReactNode
+  /** Y tick text; defaults to a Greek number. */
+  yFormat?: (v: number) => string
+  /** Flip the y axis (for times, so faster is higher). */
+  reversed?: boolean
 }) {
   const h = props.height ?? 200
   const common = (
@@ -83,7 +95,8 @@ export function TrendChart(props: {
         axisLine={false}
         width={44}
         domain={props.domain ?? ['auto', 'auto']}
-        tickFormatter={(v: number) => num(v, 1)}
+        reversed={props.reversed}
+        tickFormatter={props.yFormat ?? ((v: number) => num(v, 1))}
       />
       <Tooltip
         cursor={props.kind === 'bar' ? { fill: 'var(--surface-2)' } : { stroke: 'var(--muted)', strokeDasharray: '3 3' }}

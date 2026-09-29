@@ -525,6 +525,49 @@ export function DateInput(props: { value: string | null | undefined; onChange: (
   )
 }
 
+/** Duration as separate h / m / s boxes (phone keypads have no ':'). Reports seconds, or null when empty. */
+export function DurationInput(props: { value: number | null | undefined; onChange: (v: number | null) => void }) {
+  const split = (v: number | null | undefined) =>
+    v == null
+      ? ['', '', '']
+      : [Math.floor(v / 3600), Math.floor((v % 3600) / 60), +(v % 60).toFixed(1)].map((n, i) =>
+          i === 0 && n === 0 ? '' : String(n).replace('.', ','),
+        )
+  const [parts, setParts] = useState(split(props.value))
+  const total = (p: string[]) => {
+    if (p.every((x) => x.trim() === '')) return null
+    const [h, m, s] = p.map((x) => parseNum(x) ?? 0)
+    const t = h * 3600 + m * 60 + s
+    return t > 0 ? +t.toFixed(1) : null
+  }
+  // Resync only when the value changes from outside.
+  useEffect(() => {
+    if (total(parts) !== (props.value ?? null)) setParts(split(props.value))
+  }, [props.value])
+
+  return (
+    <span className="flex items-center gap-1">
+      {(['ώ', 'λ', 'δ'] as const).map((u, i) => (
+        <span key={u} className="flex items-center gap-0.5">
+          {i > 0 && <span className="text-muted">:</span>}
+          <input
+            inputMode={i === 2 ? 'decimal' : 'numeric'}
+            value={parts[i]}
+            placeholder={i === 0 ? '0' : '00'}
+            aria-label={['Ώρες', 'Λεπτά', 'Δευτερόλεπτα'][i]}
+            onChange={(e) => {
+              const next = parts.map((x, j) => (j === i ? e.target.value : x))
+              setParts(next)
+              props.onChange(total(next))
+            }}
+            className="h-10 w-12 rounded-xl bg-surface-2 px-1 text-center text-base font-semibold outline-none focus:ring-2 focus:ring-accent"
+          />
+        </span>
+      ))}
+    </span>
+  )
+}
+
 export function TextInput(props: { value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
   return (
     <input

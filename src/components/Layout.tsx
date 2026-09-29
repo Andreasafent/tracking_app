@@ -12,6 +12,7 @@ import {
   Menu,
   Settings,
   Target,
+  Trophy,
   UtensilsCrossed,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -25,6 +26,7 @@ export const NAV = [
   { to: '/foods', label: 'ΤΡΟΦΙΜΑ', icon: Apple },
   { to: '/plan', label: 'MARATHON BLOCK', icon: Target },
   { to: '/training', label: 'TRAINING PLAN', icon: Dumbbell },
+  { to: '/progress', label: 'PROGRESS / PBs', icon: Trophy },
   { to: '/running', label: 'KMAGE', icon: Footprints },
   { to: '/weekly', label: 'WEEKLY STATS', icon: BarChart3 },
   { to: '/monthly', label: 'MONTHLY STATS', icon: CalendarDays },

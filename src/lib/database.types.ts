@@ -114,6 +114,51 @@ type SavedMealRow = {
   user_id: string
 }
 
+type ExerciseRow = {
+  created_at: string
+  id: string
+  muscle_group: string
+  name: string
+  notes: string | null
+  user_id: string
+}
+
+type ExerciseLogRow = {
+  created_at: string
+  date: string
+  exercise_id: string
+  id: string
+  notes: string | null
+  reps: number | null
+  sets: number | null
+  user_id: string
+  weight: number | null
+}
+
+type PbDistanceRow = {
+  created_at: string
+  id: string
+  legs: Json | null
+  meters: number
+  name: string
+  sport: 'run' | 'triathlon'
+  user_id: string
+}
+
+type DistanceEffortRow = {
+  created_at: string
+  date: string
+  distance_id: string
+  goal_sec: number | null
+  id: string
+  is_race: boolean
+  notes: string | null
+  race_name: string | null
+  splits: Json | null
+  time_sec: number | null
+  user_id: string
+}
+
 type TrainingPlanRow = {
   created_at: string
   days: Json
@@ -207,8 +252,12 @@ export type Database = {
     Tables: {
       activities: Table<ActivityRow, 'name'>
       daily_log: Table<DailyLogRow, 'date'>
+      distance_efforts: Table<DistanceEffortRow, 'distance_id' | 'date'>
+      exercise_logs: Table<ExerciseLogRow, 'exercise_id' | 'date'>
+      exercises: Table<ExerciseRow, 'name' | 'muscle_group'>
       foods: Table<FoodRow, 'name' | 'kcal'>
       meal_entries: Table<MealEntryRow, 'date' | 'slot'>
+      pb_distances: Table<PbDistanceRow, 'name' | 'meters'>
       periods: Table<PeriodRow, 'start_date' | 'end_date' | 'target_intake' | 'burn_estimate'>
       run_plan_weeks: Table<RunPlanWeekRow, 'week_no' | 'start_date' | 'end_date'>
       saved_meals: Table<SavedMealRow, 'name'>
@@ -244,6 +293,10 @@ export type Period = PeriodRow
 export type RunPlanWeek = RunPlanWeekRow
 export type SavedMeal = SavedMealRow
 export type TrainingPlan = TrainingPlanRow
+export type Exercise = ExerciseRow
+export type ExerciseLog = ExerciseLogRow
+export type PbDistance = PbDistanceRow
+export type DistanceEffort = DistanceEffortRow
 export type Workout = WorkoutRow
 export type DailySummary = DailySummaryRow
 export type { MealSlot }
