@@ -17,7 +17,7 @@ export type IntakeTarget = { kcal: number | null; source: 'training' | 'period' 
 
 /**
  * The day's calorie target: the training plan's target for that day if set,
- * otherwise the MARATHON BLOCK period covering it, otherwise none.
+ * otherwise the TARGETS period covering it, otherwise none.
  */
 export function intakeTarget(date: ISODate, plans: TrainingPlan[], period: Period | undefined): IntakeTarget {
   for (const p of plans) {

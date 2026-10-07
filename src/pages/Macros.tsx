@@ -60,7 +60,7 @@ export function Macros() {
 
   const rows = meals.data ?? []
   const kcal = total(rows, 'kcal')
-  // Training plan's target for the day → MARATHON BLOCK period → none (shown as a warning).
+  // Training plan's target for the day → TARGETS period → none (shown as a warning).
   const intake = intakeTarget(date, useTrainingPlans().data ?? [], period)
   const target = intake.kcal
   const remaining = target == null ? null : target - kcal

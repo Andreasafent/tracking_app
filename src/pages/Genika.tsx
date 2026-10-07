@@ -36,7 +36,7 @@ export function Genika() {
   const w7 = weight7(rows, date)
 
   const period = usePeriods().data?.find((p) => p.start_date <= date && p.end_date >= date)
-  // Training plan's target for the day → MARATHON BLOCK period → none (shown as a warning).
+  // Training plan's target for the day → TARGETS period → none (shown as a warning).
   const intake = intakeTarget(date, useTrainingPlans().data ?? [], period)
   const target = intake.kcal
   const remaining = target == null ? null : target - (s?.kcal ?? 0)

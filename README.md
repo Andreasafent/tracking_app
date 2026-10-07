@@ -29,11 +29,11 @@ VITE_SUPABASE_PUBLISHABLE_KEY=...
 | `workouts` + `activities` | ΓΥΜΝΑΣΤΙΚΗ sessions |
 | `periods` | MACROS target, Cals BURNED, NEW PLAN (non-overlapping date ranges) |
 | `foods` | CALCULATOR food list |
-| `run_plan_weeks` | KMAGE |
+| `run_plan_weeks` | MARATHON BLOCK |
 
 `daily_summary` (view) derives totals, remaining, deficit and per-activity numbers; weekly/monthly stats are computed client-side from it (`src/lib/stats.ts`).
 
-Weeks: stats use Thursday–Wednesday weeks, KMAGE uses its own dates, monthly stats use 7-day blocks from the 1st.
+Weeks: stats use Thursday–Wednesday weeks, MARATHON BLOCK uses its own dates, monthly stats use 7-day blocks from the 1st.
 
 ## Importing the sheet
 
