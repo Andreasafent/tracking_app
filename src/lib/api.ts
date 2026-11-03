@@ -132,6 +132,29 @@ export function useDistanceEfforts() {
   })
 }
 
+export function useExpenseCategories() {
+  return useQuery({
+    queryKey: ['expense_categories'],
+    queryFn: async () => must(await supabase.from('expense_categories').select('*').order('sort').order('name')),
+  })
+}
+
+export function useExpenseProducts() {
+  return useQuery({
+    queryKey: ['expense_products'],
+    queryFn: async () => must(await supabase.from('expense_products').select('*').order('name')),
+  })
+}
+
+/** Expenses in a date range (inclusive), oldest first. */
+export function useExpenses(from: ISODate, to: ISODate) {
+  return useQuery({
+    queryKey: ['expenses', from, to],
+    queryFn: async () =>
+      must(await supabase.from('expenses').select('*').gte('date', from).lte('date', to).order('date').order('created_at')),
+  })
+}
+
 export function useRunPlan() {
   return useQuery({
     queryKey: ['run_plan'],
@@ -257,6 +280,9 @@ export function useAddDistances() {
 /** Generic save/delete for the simple CRUD tables. */
 type CrudTable =
   | 'foods'
+  | 'expense_categories'
+  | 'expense_products'
+  | 'expenses'
   | 'periods'
   | 'run_plan_weeks'
   | 'activities'
@@ -268,6 +294,9 @@ type CrudTable =
   | 'distance_efforts'
 const crudKey: Record<CrudTable, string> = {
   foods: 'foods',
+  expense_categories: 'expense_categories',
+  expense_products: 'expense_products',
+  expenses: 'expenses',
   saved_meals: 'saved_meals',
   periods: 'periods',
   run_plan_weeks: 'run_plan',

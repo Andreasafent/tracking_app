@@ -181,7 +181,41 @@ type WorkoutRow = {
   user_id: string
 }
 
-type Nullable<T> = { [K in keyof T]: T[K] | null }
+type Recurrence = 'weekly' | 'monthly' | 'quarterly' | 'semiannual' | 'yearly'
+
+type ExpenseCategoryRow = {
+  color: string
+  created_at: string
+  id: string
+  name: string
+  sort: number
+  user_id: string
+}
+
+type ExpenseProductRow = {
+  active: boolean
+  category_id: string | null
+  created_at: string
+  id: string
+  name: string
+  next_due: string | null
+  recurrence: Recurrence | null
+  unit_price: number | null
+  user_id: string
+}
+
+type ExpenseRow = {
+  amount: number
+  created_at: string
+  date: string
+  id: string
+  name: string | null
+  product_id: string | null
+  quantity: number | null
+  user_id: string
+}
+
+type Nullable<T> ={ [K in keyof T]: T[K] | null }
 type InsertOf<T, Required extends keyof T> = Partial<T> & Pick<T, Required>
 
 type Table<Row, Req extends keyof Row, Rel = []> = {
@@ -255,6 +289,9 @@ export type Database = {
       distance_efforts: Table<DistanceEffortRow, 'distance_id' | 'date'>
       exercise_logs: Table<ExerciseLogRow, 'exercise_id' | 'date'>
       exercises: Table<ExerciseRow, 'name' | 'muscle_group'>
+      expense_categories: Table<ExpenseCategoryRow, 'name'>
+      expense_products: Table<ExpenseProductRow, 'name'>
+      expenses: Table<ExpenseRow, 'date' | 'amount'>
       foods: Table<FoodRow, 'name' | 'kcal'>
       meal_entries: Table<MealEntryRow, 'date' | 'slot'>
       pb_distances: Table<PbDistanceRow, 'name' | 'meters'>
@@ -297,6 +334,10 @@ export type Exercise = ExerciseRow
 export type ExerciseLog = ExerciseLogRow
 export type PbDistance = PbDistanceRow
 export type DistanceEffort = DistanceEffortRow
+export type ExpenseCategory = ExpenseCategoryRow
+export type ExpenseProduct = ExpenseProductRow
+export type Expense = ExpenseRow
+export type { Recurrence }
 export type Workout = WorkoutRow
 export type DailySummary = DailySummaryRow
 export type { MealSlot }

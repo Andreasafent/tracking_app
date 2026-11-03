@@ -2,6 +2,7 @@ import { Activity, Brain, Calculator, ChevronRight, Dumbbell, HeartPulse, Plus, 
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { GroupSheet, type GroupKey } from '../components/DailyFields'
+import { DuePayments } from '../components/DuePayments'
 import { WorkoutSheet } from '../components/WorkoutSheet'
 import { Chip, ErrorNote, Grid, Hero, MacroRing, QuickAction, QuickActions, Stat, Stepper, Widget } from '../components/ui'
 import { useActivities, useDailyLog, usePeriods, useSummaries, useTrainingPlans, useWorkouts } from '../lib/api'
@@ -89,6 +90,8 @@ export function Genika() {
       </Hero>
 
       <ErrorNote error={summaries.error} />
+
+      <DuePayments />
 
       <div key={date} className={anim}>
         <Grid>

@@ -6,14 +6,17 @@ import {
   Calculator,
   BookOpen,
   CalendarDays,
+  ChartPie,
   Dumbbell,
   Footprints,
   House,
   Menu,
   Settings,
+  ShoppingBag,
   Target,
   Trophy,
   UtensilsCrossed,
+  Wallet,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
@@ -28,6 +31,9 @@ export const NAV = [
   { to: '/progress', label: 'PROGRESS / PBs', icon: Trophy },
   { to: '/meals', label: 'ΓΕΥΜΑΤΑ', icon: BookOpen },
   { to: '/foods', label: 'ΤΡΟΦΙΜΑ', icon: Apple },
+  { to: '/expenses', label: 'ΕΞΟΔΑ', icon: Wallet },
+  { to: '/expense-analysis', label: 'ΑΝΑΛΥΣΗ ΕΞΟΔΩΝ', icon: ChartPie },
+  { to: '/products', label: 'ΠΡΟΙΟΝΤΑ', icon: ShoppingBag },
   { to: '/weekly', label: 'WEEKLY STATS', icon: BarChart3 },
   { to: '/monthly', label: 'MONTHLY STATS', icon: CalendarDays },
   { to: '/settings', label: 'ΡΥΘΜΙΣΕΙΣ', icon: Settings },

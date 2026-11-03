@@ -5,6 +5,8 @@ import { Layout } from './components/Layout'
 import { Loading } from './components/ui'
 import { supabase } from './lib/supabase'
 import { Calculator } from './pages/Calculator'
+import { ExpenseAnalysis } from './pages/ExpenseAnalysis'
+import { Expenses } from './pages/Expenses'
 import { Foods } from './pages/Foods'
 import { Genika } from './pages/Genika'
 import { Login } from './pages/Login'
@@ -12,6 +14,7 @@ import { Macros } from './pages/Macros'
 import { Meals } from './pages/Meals'
 import { Monthly } from './pages/Monthly'
 import { Plan } from './pages/Plan'
+import { Products } from './pages/Products'
 import { Progress } from './pages/Progress'
 import { Training } from './pages/Training'
 import { Running } from './pages/Running'
@@ -38,7 +41,10 @@ export default function App() {
         <Route path="calculator" element={<Calculator />} />
         <Route path="meals" element={<Meals />} />
         <Route path="foods" element={<Foods />} />
-        <Route path="plan" element={<Plan />} />
+        <Route path="expenses" element={<Expenses />} />
+        <Route path="expense-analysis" element={<ExpenseAnalysis />} />
+        <Route path="products" element={<Products />} />
+        <Route path="plan"element={<Plan />} />
         <Route path="training" element={<Training />} />
         <Route path="progress" element={<Progress />} />
         <Route path="running" element={<Running />} />
