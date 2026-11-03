@@ -21,7 +21,13 @@ export function Products() {
     params.has('new') ? { name: params.get('new') ?? '' } : null,
   )
   const [catsOpen, setCatsOpen] = useState(false)
-  const list = (products.data ?? []).filter((p) => norm(p.name).includes(norm(q)))
+  // '' = all, 'none' = uncategorised, otherwise a category id.
+  const [cat, setCat] = useState('')
+  const list = (products.data ?? []).filter(
+    (p) =>
+      norm(p.name).includes(norm(q)) && (cat === '' || (cat === 'none' ? p.category_id == null : p.category_id === cat)),
+  )
+  const chips = [{ id: '', name: 'Όλα', color: '' }, ...categories, { id: 'none', name: 'Χωρίς κατηγορία', color: '' }]
 
   return (
     <div className="space-y-3">
@@ -41,6 +47,23 @@ export function Products() {
           placeholder="Αναζήτηση…"
           className="h-11 w-full rounded-2xl bg-surface pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
         />
+      </div>
+
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
+        {chips.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setCat(c.id)}
+            className={clsx(
+              'flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition active:scale-95',
+              cat === c.id ? 'bg-accent text-white' : 'bg-surface text-muted hover:text-text',
+            )}
+          >
+            {c.color && <span className="size-2 rounded-full" style={{ background: c.color }} />}
+            {c.name}
+          </button>
+        ))}
       </div>
 
       <Widget title={`${list.length} προϊόντα`}>

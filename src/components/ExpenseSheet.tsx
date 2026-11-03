@@ -28,11 +28,13 @@ export function ExpenseSheet(props: { target: ExpenseTarget | null; date: ISODat
   const [qty, setQty] = useState<number | null>(null)
   const [amount, setAmount] = useState<number | null>(null)
   const [q, setQ] = useState('')
+  const [hi, setHi] = useState(0) // highlighted row in the product picker (Enter picks it)
 
-  const t = props.target
+  const t =props.target
   useEffect(() => {
     if (!t) return
     setQ('')
+    setHi(0)
     const e = t.expense
     if (e) {
       const p = products.find((x) => x.id === e.product_id) ?? null
@@ -132,20 +134,33 @@ export function ExpenseSheet(props: { target: ExpenseTarget | null; date: ISODat
             <input
               autoFocus
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => {
+                setQ(e.target.value)
+                setHi(0)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                  e.preventDefault()
+                  if (list.length) setHi((i) => (i + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length)
+                } else if (e.key === 'Enter' && list[hi]) {
+                  e.preventDefault()
+                  pick(list[hi])
+                }
+              }}
               placeholder="Αναζήτηση προϊόντος…"
               className="h-11 w-full rounded-2xl bg-surface-2 pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
           <ul className="mt-2 divide-y divide-line">
-            {list.map((p) => {
+            {list.map((p, i) => {
               const cat = categories.find((c) => c.id === p.category_id)
               return (
                 <li key={p.id}>
                   <button
                     type="button"
+                    ref={i === hi ? (el) => el?.scrollIntoView({ block: 'nearest' }) : undefined}
                     onClick={() => pick(p)}
-                    className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-surface-2"
+                    className={`-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-surface-2 ${i === hi ? 'bg-surface-2' : ''}`}
                   >
                     <span className="size-2.5 shrink-0 rounded-full" style={{ background: cat?.color ?? 'var(--muted)' }} />
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold">{p.name}</span>
