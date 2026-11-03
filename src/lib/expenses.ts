@@ -48,12 +48,13 @@ export type CategoryTotal = {
   items: { label: string; total: number; count: number }[]
 }
 
-/** Groups expenses by the category of their product; free entries and uncategorised products go to "Άλλα έξοδα". */
+/** Groups expenses by category (the product's, or the entry's own for free entries); no category → "Άλλα έξοδα". */
 export function groupByCategory(expenses: Expense[], products: ExpenseProduct[], categories: ExpenseCategory[]): CategoryTotal[] {
   const groups = new Map<string, CategoryTotal>()
   for (const e of expenses) {
     const product = products.find((p) => p.id === e.product_id)
-    const cat = product?.category_id ? categories.find((c) => c.id === product.category_id) : undefined
+    const catId = product ? product.category_id : e.category_id
+    const cat = catId ? categories.find((c) => c.id === catId) : undefined
     const key = cat?.id ?? OTHER_KEY
     let g = groups.get(key)
     if (!g) {

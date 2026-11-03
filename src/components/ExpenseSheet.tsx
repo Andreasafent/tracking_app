@@ -6,7 +6,7 @@ import type { Expense, ExpenseProduct } from '../lib/database.types'
 import { type ISODate } from '../lib/dates'
 import { eur, nextDueAfter } from '../lib/expenses'
 import { num } from '../lib/format'
-import { Button, DateInput, ErrorNote, Field, NumberInput, Segmented, Sheet, TextInput } from './ui'
+import { Button, DateInput, ErrorNote, Field, NumberInput, Segmented, Select, Sheet, TextInput } from './ui'
 
 /** What the sheet opens for: a new/edited expense, optionally of a product; `due` also moves the product's next payment date. */
 export type ExpenseTarget = { expense?: Expense; product?: ExpenseProduct; kind?: 'product' | 'free'; due?: boolean }
@@ -27,6 +27,7 @@ export function ExpenseSheet(props: { target: ExpenseTarget | null; date: ISODat
   const [title, setTitle] = useState('')
   const [qty, setQty] = useState<number | null>(null)
   const [amount, setAmount] = useState<number | null>(null)
+  const [catId, setCatId] = useState('') // free entries only; '' = Άλλα έξοδα
   const [q, setQ] = useState('')
   const [hi, setHi] = useState(0) // highlighted row in the product picker (Enter picks it)
 
@@ -42,6 +43,7 @@ export function ExpenseSheet(props: { target: ExpenseTarget | null; date: ISODat
       setDate(e.date)
       setProduct(p)
       setTitle(p ? '' : (e.name ?? ''))
+      setCatId(e.category_id ?? '')
       setQty(e.quantity)
       setAmount(e.amount)
     } else {
@@ -50,6 +52,7 @@ export function ExpenseSheet(props: { target: ExpenseTarget | null; date: ISODat
       setDate(props.date)
       setProduct(p)
       setTitle('')
+      setCatId('')
       setQty(p?.unit_price != null ? 1 : null)
       setAmount(p?.unit_price ?? null)
     }
@@ -78,6 +81,7 @@ export function ExpenseSheet(props: { target: ExpenseTarget | null; date: ISODat
         date,
         product_id: isProduct ? product.id : null,
         name: isProduct ? product.name : title.trim() || null,
+        category_id: isProduct ? null : catId || null,
         amount: amount!,
         quantity: isProduct && product.unit_price != null ? qty : null,
       },
@@ -193,6 +197,15 @@ export function ExpenseSheet(props: { target: ExpenseTarget | null; date: ISODat
             <div className="mt-3">
               <TextInput value={title} onChange={setTitle} placeholder="Τίτλος (προαιρετικό)" />
             </div>
+          )}
+          {kind === 'free' && (
+            <Field label="Κατηγορία">
+              <Select
+                value={catId}
+                onChange={setCatId}
+                options={[{ value: '', label: 'Άλλα έξοδα' }, ...categories.map((c) => ({ value: c.id, label: c.name }))]}
+              />
+            </Field>
           )}
           <Field label="Ημερομηνία">
             <DateInput value={date} onChange={setDate} />

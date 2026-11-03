@@ -72,7 +72,7 @@ export function Expenses() {
             <ul className="divide-y divide-line">
               {dayRows.map((e) => {
                 const product = products.find((p) => p.id === e.product_id)
-                const cat = categories.find((c) => c.id === product?.category_id)
+                const cat = categories.find((c) => c.id === (product ? product.category_id : e.category_id))
                 const armed = confirmDelete === e.id
                 return (
                   <li key={e.id} className="flex items-center gap-1">

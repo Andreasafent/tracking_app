@@ -206,6 +206,7 @@ type ExpenseProductRow = {
 
 type ExpenseRow = {
   amount: number
+  category_id: string | null
   created_at: string
   date: string
   id: string
