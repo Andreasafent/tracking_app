@@ -155,6 +155,20 @@ export function useExpenses(from: ISODate, to: ISODate) {
   })
 }
 
+export function usePacerPlans() {
+  return useQuery({
+    queryKey: ['pacer_plans'],
+    queryFn: async () => must(await supabase.from('pacer_plans').select('*').order('created_at')),
+  })
+}
+
+export function usePacerRuns() {
+  return useQuery({
+    queryKey: ['pacer_runs'],
+    queryFn: async () => must(await supabase.from('pacer_runs').select('*').order('run_date', { ascending: false }).order('created_at', { ascending: false })),
+  })
+}
+
 export function useRunPlan() {
   return useQuery({
     queryKey: ['run_plan'],
@@ -283,6 +297,8 @@ type CrudTable =
   | 'expense_categories'
   | 'expense_products'
   | 'expenses'
+  | 'pacer_plans'
+  | 'pacer_runs'
   | 'periods'
   | 'run_plan_weeks'
   | 'activities'
@@ -297,6 +313,8 @@ const crudKey: Record<CrudTable, string> = {
   expense_categories: 'expense_categories',
   expense_products: 'expense_products',
   expenses: 'expenses',
+  pacer_plans: 'pacer_plans',
+  pacer_runs: 'pacer_runs',
   saved_meals: 'saved_meals',
   periods: 'periods',
   run_plan_weeks: 'run_plan',

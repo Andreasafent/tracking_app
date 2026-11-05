@@ -216,7 +216,26 @@ type ExpenseRow = {
   user_id: string
 }
 
-type Nullable<T> ={ [K in keyof T]: T[K] | null }
+type PacerPlanRow = {
+  created_at: string
+  id: string
+  name: string
+  scenarios: Json
+  segments: Json
+  user_id: string
+}
+
+type PacerRunRow = {
+  created_at: string
+  id: string
+  laps: Json
+  plan_id: string | null
+  run_date: string
+  total_sec: number | null
+  user_id: string
+}
+
+type Nullable<T> = { [K in keyof T]: T[K] | null }
 type InsertOf<T, Required extends keyof T> = Partial<T> & Pick<T, Required>
 
 type Table<Row, Req extends keyof Row, Rel = []> = {
@@ -296,6 +315,8 @@ export type Database = {
       foods: Table<FoodRow, 'name' | 'kcal'>
       meal_entries: Table<MealEntryRow, 'date' | 'slot'>
       pb_distances: Table<PbDistanceRow, 'name' | 'meters'>
+      pacer_plans: Table<PacerPlanRow, 'name' | 'scenarios'>
+      pacer_runs: Table<PacerRunRow, 'laps'>
       periods: Table<PeriodRow, 'start_date' | 'end_date' | 'target_intake' | 'burn_estimate'>
       run_plan_weeks: Table<RunPlanWeekRow, 'week_no' | 'start_date' | 'end_date'>
       saved_meals: Table<SavedMealRow, 'name'>
@@ -339,6 +360,8 @@ export type ExpenseCategory = ExpenseCategoryRow
 export type ExpenseProduct = ExpenseProductRow
 export type Expense = ExpenseRow
 export type { Recurrence }
+export type PacerPlan = PacerPlanRow
+export type PacerRun = PacerRunRow
 export type Workout = WorkoutRow
 export type DailySummary = DailySummaryRow
 export type { MealSlot }

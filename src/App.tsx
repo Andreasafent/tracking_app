@@ -13,6 +13,7 @@ import { Login } from './pages/Login'
 import { Macros } from './pages/Macros'
 import { Meals } from './pages/Meals'
 import { Monthly } from './pages/Monthly'
+import { Pacer } from './pages/Pacer'
 import { Plan } from './pages/Plan'
 import { Products } from './pages/Products'
 import { Progress } from './pages/Progress'
@@ -44,9 +45,10 @@ export default function App() {
         <Route path="expenses" element={<Expenses />} />
         <Route path="expense-analysis" element={<ExpenseAnalysis />} />
         <Route path="products" element={<Products />} />
-        <Route path="plan"element={<Plan />} />
+        <Route path="plan" element={<Plan />} />
         <Route path="training" element={<Training />} />
         <Route path="progress" element={<Progress />} />
+        <Route path="pacer" element={<Pacer />} />
         <Route path="running" element={<Running />} />
         <Route path="weekly" element={<Weekly />} />
         <Route path="monthly" element={<Monthly />} />
