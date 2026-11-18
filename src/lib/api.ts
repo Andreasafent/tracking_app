@@ -169,6 +169,13 @@ export function usePacerRuns() {
   })
 }
 
+export function useShoppingItems() {
+  return useQuery({
+    queryKey: ['shopping_items'],
+    queryFn: async () => must(await supabase.from('shopping_items').select('*').order('created_at')),
+  })
+}
+
 export function useRunPlan() {
   return useQuery({
     queryKey: ['run_plan'],
@@ -291,6 +298,30 @@ export function useAddDistances() {
   )
 }
 
+/** Ticks an item off. Optimistic, because it is used in a shop with bad signal and must feel instant. */
+export function useToggleShopping() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, checked }: { id: string; checked: boolean }) =>
+      must(await supabase.from('shopping_items').update({ checked }).eq('id', id)),
+    onMutate: async ({ id, checked }) => {
+      await qc.cancelQueries({ queryKey: ['shopping_items'] })
+      const prev = qc.getQueryData<Tables['shopping_items']['Row'][]>(['shopping_items'])
+      qc.setQueryData<Tables['shopping_items']['Row'][]>(['shopping_items'], (rows) =>
+        rows?.map((r) => (r.id === id ? { ...r, checked } : r)),
+      )
+      return { prev }
+    },
+    onError: (_e, _v, ctx) => qc.setQueryData(['shopping_items'], ctx?.prev),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['shopping_items'] }),
+  })
+}
+
+/** Removes every ticked item. */
+export function useClearChecked() {
+  return useWrite(async () => must(await supabase.from('shopping_items').delete().eq('checked', true)), ['shopping_items'])
+}
+
 /** Generic save/delete for the simple CRUD tables. */
 type CrudTable =
   | 'foods'
@@ -299,6 +330,7 @@ type CrudTable =
   | 'expenses'
   | 'pacer_plans'
   | 'pacer_runs'
+  | 'shopping_items'
   | 'periods'
   | 'run_plan_weeks'
   | 'activities'
@@ -315,6 +347,7 @@ const crudKey: Record<CrudTable, string> = {
   expenses: 'expenses',
   pacer_plans: 'pacer_plans',
   pacer_runs: 'pacer_runs',
+  shopping_items: 'shopping_items',
   saved_meals: 'saved_meals',
   periods: 'periods',
   run_plan_weeks: 'run_plan',

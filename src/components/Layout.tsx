@@ -13,6 +13,7 @@ import {
   Menu,
   Settings,
   ShoppingBag,
+  ShoppingCart,
   Target,
   Timer,
   Trophy,
@@ -33,6 +34,7 @@ export const NAV = [
   { to: '/progress', label: 'PROGRESS / PBs', icon: Trophy },
   { to: '/meals', label: 'ΓΕΥΜΑΤΑ', icon: BookOpen },
   { to: '/foods', label: 'ΤΡΟΦΙΜΑ', icon: Apple },
+  { to: '/shopping', label: 'ΛΙΣΤΑ ΑΓΟΡΩΝ', icon: ShoppingCart },
   { to: '/expenses', label: 'ΕΞΟΔΑ', icon: Wallet },
   { to: '/expense-analysis', label: 'ΑΝΑΛΥΣΗ ΕΞΟΔΩΝ', icon: ChartPie },
   { to: '/products', label: 'ΠΡΟΙΟΝΤΑ', icon: ShoppingBag },
@@ -93,7 +95,7 @@ export function Layout() {
   return (
     <div className="min-h-dvh lg:flex">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-line p-4 lg:flex">
+      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-line overflow-y-auto p-4 lg:flex">
         <div className="px-3 pt-2 text-lg font-extrabold tracking-tight">Tracking</div>
         <NavList />
       </aside>
@@ -116,7 +118,7 @@ export function Layout() {
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="anim-fade absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <aside className="anim-from-left absolute inset-y-0 left-0 flex w-72 flex-col gap-6 bg-surface p-4 pt-[max(1rem,env(safe-area-inset-top))]">
+          <aside className="anim-from-left absolute inset-y-0 left-0 flex w-72 flex-col gap-6 overflow-y-auto overscroll-contain bg-surface p-4 pt-[max(1rem,env(safe-area-inset-top))]">
             <div className="px-3 pt-2 text-lg font-extrabold tracking-tight">Tracking</div>
             <NavList onNavigate={() => setOpen(false)} />
           </aside>

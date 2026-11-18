@@ -17,6 +17,7 @@ import { Pacer } from './pages/Pacer'
 import { Plan } from './pages/Plan'
 import { Products } from './pages/Products'
 import { Progress } from './pages/Progress'
+import { Shopping } from './pages/Shopping'
 import { Training } from './pages/Training'
 import { Running } from './pages/Running'
 import { SettingsPage } from './pages/Settings'
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="calculator" element={<Calculator />} />
         <Route path="meals" element={<Meals />} />
         <Route path="foods" element={<Foods />} />
+        <Route path="shopping" element={<Shopping />} />
         <Route path="expenses" element={<Expenses />} />
         <Route path="expense-analysis" element={<ExpenseAnalysis />} />
         <Route path="products" element={<Products />} />

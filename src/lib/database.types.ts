@@ -216,6 +216,15 @@ type ExpenseRow = {
   user_id: string
 }
 
+type ShoppingItemRow = {
+  checked: boolean
+  created_at: string
+  food_id: string | null
+  id: string
+  name: string
+  user_id: string
+}
+
 type PacerPlanRow = {
   created_at: string
   id: string
@@ -319,6 +328,7 @@ export type Database = {
       pacer_runs: Table<PacerRunRow, 'laps'>
       periods: Table<PeriodRow, 'start_date' | 'end_date' | 'target_intake' | 'burn_estimate'>
       run_plan_weeks: Table<RunPlanWeekRow, 'week_no' | 'start_date' | 'end_date'>
+      shopping_items: Table<ShoppingItemRow, 'name'>
       saved_meals: Table<SavedMealRow, 'name'>
       training_plans: Table<TrainingPlanRow, 'start_date' | 'end_date'>
       workouts: Table<
@@ -360,6 +370,7 @@ export type ExpenseCategory = ExpenseCategoryRow
 export type ExpenseProduct = ExpenseProductRow
 export type Expense = ExpenseRow
 export type { Recurrence }
+export type ShoppingItem = ShoppingItemRow
 export type PacerPlan = PacerPlanRow
 export type PacerRun = PacerRunRow
 export type Workout = WorkoutRow
