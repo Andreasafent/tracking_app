@@ -9,7 +9,7 @@ import type { Json, MealSlot } from '../lib/database.types'
 import { addDays, fmtDay, relativeDayLabel, today } from '../lib/dates'
 import { num } from '../lib/format'
 import { addNutrients, itemsOf, itemsOfLines, linesOf, round1, rowsOf, SLOTS, slotLabel, ZERO, type Nutrients, type Row, type MealItem } from '../lib/meals'
-import { intakeTarget } from '../lib/training'
+import { intakeTarget, macroTargets } from '../lib/training'
 import { useSwipe } from '../lib/useSwipe'
 import '../styles/pages.css'
 
@@ -103,7 +103,9 @@ export function Calculator() {
   // What is left of the day's calories, before and after this meal (an edited meal doesn't count twice).
   const dayMeals = useMeals(date).data ?? []
   const period = usePeriods().data?.find((p) => p.start_date <= date && p.end_date >= date)
-  const target = intakeTarget(date, useTrainingPlans().data ?? [], period).kcal
+  const plans = useTrainingPlans().data ?? []
+  const target = intakeTarget(date, plans, period).kcal
+  const macroGoal = macroTargets(date, plans, period)
 
   const lines = linesOf(draft.rows, foodById)
   const totals = lines.reduce((a, l) => addNutrients(a, l.n), ZERO)
@@ -146,10 +148,18 @@ export function Calculator() {
   // Where the calories come from: protein and carbs 4 kcal/g, fat 9 kcal/g.
   const energy = [per.protein * 4, per.carbs * 4, per.fat * 9]
   const energySum = energy.reduce((a, b) => a + b, 0)
+  // Grams of each macro left for the day, before and after this meal (an edited meal doesn't count twice).
+  const eatenOthers = (k: 'protein' | 'carbs' | 'fat') => dayMeals.reduce((a, m) => a + (m.id === entryId ? 0 : (m[k] ?? 0)), 0)
+  const left = (k: 'protein' | 'carbs' | 'fat') => {
+    const goal = macroGoal[k]
+    if (goal == null) return null
+    const before = goal - eatenOthers(k)
+    return { before, after: before - per[k] }
+  }
   const shares = [
-    { name: 'Πρωτεΐνη', g: per.protein, color: '#17503B', e: energy[0] },
-    { name: 'Υδατάνθρακες', g: per.carbs, color: '#5FAE88', e: energy[1] },
-    { name: 'Λιπαρά', g: per.fat, color: '#131512', e: energy[2] },
+    { name: 'Πρωτεΐνη', g: per.protein, color: '#17503B', e: energy[0], left: left('protein') },
+    { name: 'Υδατάνθρακες', g: per.carbs, color: '#5FAE88', e: energy[1], left: left('carbs') },
+    { name: 'Λιπαρά', g: per.fat, color: '#131512', e: energy[2], left: left('fat') },
   ]
 
   return (
@@ -235,6 +245,13 @@ export function Calculator() {
                   </dt>
                   <dd>
                     {num(s.g, 1)} g{energySum > 0 ? <span className="da-dim"> · {Math.round((s.e / energySum) * 100)}%</span> : null}
+                    {s.left && (
+                      <span className={'ca-rem' + (s.left.after < 0 ? ' over' : '')}>
+                        {s.left.after < 0
+                          ? `+${num(-s.left.after, 0)} g πάνω από τον στόχο`
+                          : `μένουν ${num(s.left.before, 0)} → ${num(s.left.after, 0)} g`}
+                      </span>
+                    )}
                   </dd>
                 </div>
               ))}
