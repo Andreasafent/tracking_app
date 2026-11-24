@@ -43,11 +43,6 @@ export function useDayData() {
     kcal,
     target,
     remaining: target == null ? null : target - kcal,
-    macros: [
-      { key: 'protein', name: 'Πρωτεΐνη', value: s?.protein ?? 0, target: s?.protein_target ?? null },
-      { key: 'carbs', name: 'Υδατάνθρακες', value: s?.carbs ?? 0, target: s?.carbs_target ?? null },
-      { key: 'fat', name: 'Λιπαρά', value: s?.fat ?? 0, target: s?.fat_target ?? null },
-    ],
     weightAvg: weight7(rows, date),
     weights: rows.filter((r) => r.weight != null).map((r) => r.weight as number),
     steps: s?.steps ?? null,

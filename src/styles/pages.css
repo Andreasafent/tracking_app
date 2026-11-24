@@ -266,3 +266,6 @@
 .da-quad .da-dim { margin-top: 6px; }
 .da-nav .da-today { width: auto; padding: 0 18px; border-radius: 999px; font-size: 13px; font-weight: 600; }
 .da-nav .da-today:disabled { opacity: .4; cursor: default; }
+.ta-mid { min-width: 0; display: grid; gap: 4px; }
+.ta-macros { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ta-day.today .ta-macros { color: #b9d9c8; }

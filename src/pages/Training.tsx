@@ -48,7 +48,14 @@ export function Training() {
       label: '',
       start_date: start,
       end_date: end,
-      days: eachDay(start, end).map((date, i) => ({ date, exercises: [...(src[i]?.exercises ?? [])], kcal: src[i]?.kcal ?? null })),
+      days: eachDay(start, end).map((date, i) => ({
+        date,
+        exercises: [...(src[i]?.exercises ?? [])],
+        kcal: src[i]?.kcal ?? null,
+        protein: src[i]?.protein ?? null,
+        carbs: src[i]?.carbs ?? null,
+        fat: src[i]?.fat ?? null,
+      })),
     })
   }
 
@@ -152,15 +159,23 @@ export function Training() {
                         <br />
                         {dm}
                       </span>
-                      {d.exercises.some(Boolean) ? (
-                        <ul className="ta-ex">
-                          {d.exercises.filter(Boolean).map((e, j) => (
-                            <li key={j}>{e}</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className="ta-rest">ξεκούραση</span>
-                      )}
+                      <div className="ta-mid">
+                        {d.exercises.some(Boolean) ? (
+                          <ul className="ta-ex">
+                            {d.exercises.filter(Boolean).map((e, j) => (
+                              <li key={j}>{e}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="ta-rest">ξεκούραση</span>
+                        )}
+                        {(d.protein != null || d.carbs != null || d.fat != null) && (
+                          <span className="ta-macros">
+                            Π {d.protein == null ? '—' : num(d.protein, 0)} · Υ {d.carbs == null ? '—' : num(d.carbs, 0)} · Λ{' '}
+                            {d.fat == null ? '—' : num(d.fat, 0)}
+                          </span>
+                        )}
+                      </div>
                       <span className="ta-kcal">{d.kcal == null ? '—' : num(d.kcal, 0)}</span>
                     </li>
                   )
@@ -210,7 +225,7 @@ export function avgKcal(days: Day[]): number | null {
 /** One entry per date in the range, keeping what was already filled in for those dates. */
 function fitDays(from: ISODate, to: ISODate, prev: Day[]): Day[] {
   const byDate = new Map(prev.map((d) => [d.date, d]))
-  return eachDay(from, to).map((date) => byDate.get(date) ?? { date, exercises: [], kcal: null })
+  return eachDay(from, to).map((date) => byDate.get(date) ?? { date, exercises: [], kcal: null, protein: null, carbs: null, fat: null })
 }
 
 export type Draft = { id?: string; label: string; start_date: ISODate; end_date: ISODate; days: Day[] }
@@ -294,6 +309,21 @@ export function PlanSheet(props: { plan: Draft; onClose: () => void }) {
             <div className="mb-2 flex items-center gap-2">
               <span className="flex-1 text-xs font-semibold tracking-wide text-muted uppercase">{fmtDayDMY(d.date)}</span>
               <NumberInput value={d.kcal} integer step={50} onChange={(v) => setDay(i, { kcal: v == null ? null : Math.round(v) })} unit="kcal" />
+            </div>
+            {/* Targets for this day; empty = the TARGETS period's value */}
+            <div className="ui-macros mb-3 grid grid-cols-3 gap-2">
+              {(
+                [
+                  ['protein', 'Πρωτεΐνη'],
+                  ['carbs', 'Υδατάνθρ.'],
+                  ['fat', 'Λιπαρά'],
+                ] as const
+              ).map(([k, label]) => (
+                <label key={k} className="ui-macro">
+                  <span className="ui-macro-label">{label}</span>
+                  <NumberInput value={d[k]} integer onChange={(v) => setDay(i, { [k]: v == null ? null : Math.round(v) })} unit="g" />
+                </label>
+              ))}
             </div>
             <div className="space-y-2">
               {d.exercises.map((ex, k) => (

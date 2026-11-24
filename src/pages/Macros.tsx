@@ -9,7 +9,7 @@ import type { Json, MealEntry, MealSlot } from '../lib/database.types'
 import { addDays, fmtDay, relativeDayLabel, today, type ISODate } from '../lib/dates'
 import { num } from '../lib/format'
 import { entryFromRecipe, itemsOf, SLOTS, slotLabel } from '../lib/meals'
-import { intakeTarget } from '../lib/training'
+import { intakeTarget, macroTargets } from '../lib/training'
 import { useDateParam } from '../lib/useDateParam'
 import { useSwipe } from '../lib/useSwipe'
 import { NutRings } from '../components/ChartParts'
@@ -28,7 +28,9 @@ export function Macros() {
   const foods = useFoods().data ?? []
   const insertMeal = useSaveMeal()
   const period = usePeriods().data?.find((p) => p.start_date <= date && p.end_date >= date)
-  const intake = intakeTarget(date, useTrainingPlans().data ?? [], period)
+  const plans = useTrainingPlans().data ?? []
+  const intake = intakeTarget(date, plans, period)
+  const targets = macroTargets(date, plans, period)
   const [inserting, setInserting] = useState<MealSlot | null>(null)
   const [editing, setEditing] = useState<{ slot: MealSlot; entry?: MealEntry } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -54,9 +56,9 @@ export function Macros() {
   const eaten = target ? Math.min(1, kcal / target) : 0
   const openCalculator = (slot: MealSlot) => navigate(`/calculator?slot=${slot}&d=${date}`)
   const macros = [
-    { key: 'protein', name: 'Πρωτεΐνη', value: total(rows, 'protein'), target: period?.protein_target ?? null },
-    { key: 'carbs', name: 'Υδατάνθρακες', value: total(rows, 'carbs'), target: period?.carbs_target ?? null },
-    { key: 'fat', name: 'Λιπαρά', value: total(rows, 'fat'), target: period?.fat_target ?? null },
+    { key: 'protein', name: 'Πρωτεΐνη', value: total(rows, 'protein'), target: targets.protein },
+    { key: 'carbs', name: 'Υδατάνθρακες', value: total(rows, 'carbs'), target: targets.carbs },
+    { key: 'fat', name: 'Λιπαρά', value: total(rows, 'fat'), target: targets.fat },
   ]
 
   return (

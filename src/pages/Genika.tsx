@@ -10,7 +10,7 @@ import { useActivities, useDailyLog, usePeriods, useSummaries, useTrainingPlans,
 import { addDays, fmtDay, today } from '../lib/dates'
 import { num, signed } from '../lib/format'
 import { KCAL_PER_KG } from '../lib/stats'
-import { intakeTarget } from '../lib/training'
+import { intakeTarget, macroTargets } from '../lib/training'
 import { useSwipe } from '../lib/useSwipe'
 import { NutRings, Spark } from '../components/ChartParts'
 import { useDayData } from '../lib/useDayData'
@@ -85,7 +85,9 @@ export function Genika() {
   const workouts = useWorkouts(date).data ?? []
   const activities = useActivities().data ?? []
   const period = usePeriods().data?.find((p) => p.start_date <= date && p.end_date >= date)
-  const intake = intakeTarget(date, useTrainingPlans().data ?? [], period)
+  const plans = useTrainingPlans().data ?? []
+  const intake = intakeTarget(date, plans, period)
+  const targets = macroTargets(date, plans, period)
   const s = summaries.data?.find((r) => r.date === date)
 
   const eaten = d.target ? Math.min(1, d.kcal / d.target) : 0
@@ -105,9 +107,9 @@ export function Genika() {
   const underTarget = withTarget.filter((w) => (w.kcal ?? 0) <= (w.target ?? 0)).length
   const q = date === today() ? '' : `?d=${date}`
   const macros = [
-    { key: 'protein', name: 'Πρωτεΐνη', value: s?.protein ?? 0, target: period?.protein_target ?? null },
-    { key: 'carbs', name: 'Υδατάνθρακες', value: s?.carbs ?? 0, target: period?.carbs_target ?? null },
-    { key: 'fat', name: 'Λιπαρά', value: s?.fat ?? 0, target: period?.fat_target ?? null },
+    { key: 'protein', name: 'Πρωτεΐνη', value: s?.protein ?? 0, target: targets.protein },
+    { key: 'carbs', name: 'Υδατάνθρακες', value: s?.carbs ?? 0, target: targets.carbs },
+    { key: 'fat', name: 'Λιπαρά', value: s?.fat ?? 0, target: targets.fat },
   ]
 
   return (

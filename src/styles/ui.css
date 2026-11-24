@@ -150,3 +150,9 @@
 /* ── The round "+" that adds an item to a list: ink, like the other primary round buttons */
 .la .ui-plus { background: var(--text); color: var(--surface); }
 .la .ui-plus:hover { filter: none; background: #2b2e29; }
+
+/* ── Per-day targets inside a plan day: three small white boxes */
+.la .ui-macro { display: grid; gap: 2px; background: var(--surface); border-radius: 16px; padding: 8px 8px 6px 12px; min-width: 0; }
+.la .ui-macro-label { font-size: 11px; color: var(--muted); }
+.la .ui-macros .ui-num-input { width: 44px; height: 34px; padding: 0 2px; font-size: 22px; }
+.la .ui-macros .ui-unit { width: auto; font-size: 12px; }
