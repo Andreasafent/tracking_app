@@ -38,7 +38,7 @@ export function HistoryTab(props: { plans: PacerPlan[] }) {
                 <button
                   type="button"
                   onClick={() => setOpen(r)}
-                  className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2"
+                  className="ui-row -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold">{fmtDMY(r.run_date)}</div>

@@ -2,7 +2,8 @@ import clsx from 'clsx'
 import { ChevronRight, Plus, Repeat, Search, Tags, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { Button, DateInput, ErrorNote, Field, Hero, NumberInput, QuickAction, QuickActions, Segmented, Select, Sheet, TextInput, Widget } from '../components/ui'
+import { PageHeader } from '../components/PageHeader'
+import { Button, DateInput, ErrorNote, Field, NumberInput, Segmented, Select, Sheet, TextInput, Widget } from '../components/ui'
 import { useDeleteRow, useExpenseCategories, useExpenseProducts, useSaveRow } from '../lib/api'
 import type { ExpenseCategory, ExpenseProduct, Recurrence } from '../lib/database.types'
 import { fmtDMY, today } from '../lib/dates'
@@ -31,12 +32,21 @@ export function Products() {
 
   return (
     <div className="space-y-3">
-      <Hero label="ΠΡΟΪΟΝΤΑ" value={num(products.data?.length ?? 0, 0)} sub="για καταχώρηση εξόδων">
-        <QuickActions>
-          <QuickAction icon={<Plus size={20} />} label="Νέο" onClick={() => setEditing({})} />
-          <QuickAction icon={<Tags size={20} />} label="Κατηγορίες" onClick={() => setCatsOpen(true)} />
-        </QuickActions>
-      </Hero>
+      <PageHeader
+        title="Προϊόντα"
+        sub={`${num(products.data?.length ?? 0, 0)} για καταχώρηση εξόδων`}
+        actions={
+          <>
+            <button type="button" aria-label="Κατηγορίες" title="Κατηγορίες" onClick={() => setCatsOpen(true)}>
+              <Tags size={17} />
+            </button>
+            <button type="button" className="da-pillbtn" onClick={() => setEditing({})}>
+              <Plus size={16} /> Νέο
+            </button>
+          </>
+        }
+      />
+    
       <ErrorNote error={products.error} />
 
       <div className="relative">
@@ -45,19 +55,19 @@ export function Products() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Αναζήτηση…"
-          className="h-11 w-full rounded-2xl bg-surface pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
+          className="ui-search h-11 w-full rounded-2xl bg-surface pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
 
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
+      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
         {chips.map((c) => (
           <button
             key={c.id}
             type="button"
             onClick={() => setCat(c.id)}
             className={clsx(
-              'flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition active:scale-95',
-              cat === c.id ? 'bg-accent text-white' : 'bg-surface text-muted hover:text-text',
+              'ui-chip flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition active:scale-95',
+              cat === c.id ? 'on bg-accent text-white' : 'bg-surface text-muted hover:text-text',
             )}
           >
             {c.color && <span className="size-2 rounded-full" style={{ background: c.color }} />}
@@ -75,7 +85,7 @@ export function Products() {
                 <button
                   type="button"
                   onClick={() => setEditing(p)}
-                  className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2"
+                  className="ui-row -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2"
                 >
                   <span className="size-2.5 shrink-0 rounded-full" style={{ background: cat?.color ?? 'var(--muted)' }} />
                   <div className="min-w-0 flex-1">
@@ -296,7 +306,7 @@ function CategoriesSheet(props: { open: boolean; categories: ExpenseCategory[]; 
               <button
                 type="button"
                 onClick={() => setEdit(c)}
-                className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2"
+                className="ui-row -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2"
               >
                 <span className="size-3 rounded-full" style={{ background: c.color }} />
                 <span className="flex-1 text-sm font-semibold">{c.name}</span>

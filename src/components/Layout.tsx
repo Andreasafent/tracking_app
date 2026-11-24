@@ -3,8 +3,8 @@ import {
   Apple,
   ArrowLeft,
   BarChart3,
-  Calculator,
   BookOpen,
+  Calculator,
   CalendarDays,
   ChartPie,
   Dumbbell,
@@ -19,51 +19,91 @@ import {
   Trophy,
   UtensilsCrossed,
   Wallet,
+  type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
+import '../styles/pages.css'
+import '../styles/layout.css'
+import '../styles/ui.css'
 
-export const NAV = [
-  { to: '/', label: 'ΓΕΝΙΚΑ', icon: House },
-  { to: '/macros', label: 'MACROS', icon: UtensilsCrossed },
-  { to: '/calculator', label: 'CALCULATOR', icon: Calculator },
-  { to: '/training', label: 'TRAINING PLAN', icon: Dumbbell },
-  { to: '/plan', label: 'TARGETS', icon: Target },
-  { to: '/running', label: 'MARATHON BLOCK', icon: Footprints },
-  { to: '/pacer', label: 'PACER', icon: Timer },
-  { to: '/progress', label: 'PROGRESS / PBs', icon: Trophy },
-  { to: '/meals', label: 'ΓΕΥΜΑΤΑ', icon: BookOpen },
-  { to: '/foods', label: 'ΤΡΟΦΙΜΑ', icon: Apple },
-  { to: '/shopping', label: 'ΛΙΣΤΑ ΑΓΟΡΩΝ', icon: ShoppingCart },
-  { to: '/expenses', label: 'ΕΞΟΔΑ', icon: Wallet },
-  { to: '/expense-analysis', label: 'ΑΝΑΛΥΣΗ ΕΞΟΔΩΝ', icon: ChartPie },
-  { to: '/products', label: 'ΠΡΟΙΟΝΤΑ', icon: ShoppingBag },
-  { to: '/weekly', label: 'WEEKLY STATS', icon: BarChart3 },
-  { to: '/monthly', label: 'MONTHLY STATS', icon: CalendarDays },
-  { to: '/settings', label: 'ΡΥΘΜΙΣΕΙΣ', icon: Settings },
+type Item = { to: string; label: string; icon: LucideIcon }
+
+/** The sidebar, grouped. Labels are the names used throughout the app. */
+const GROUPS: { title: string | null; items: Item[] }[] = [
+  {
+    title: null,
+    items: [
+      { to: '/', label: 'ΓΕΝΙΚΑ', icon: House },
+      { to: '/macros', label: 'MACROS', icon: UtensilsCrossed },
+      { to: '/calculator', label: 'CALCULATOR', icon: Calculator },
+    ],
+  },
+  {
+    title: 'Προπόνηση',
+    items: [
+      { to: '/training', label: 'TRAINING PLAN', icon: Dumbbell },
+      { to: '/plan', label: 'TARGETS', icon: Target },
+      { to: '/running', label: 'MARATHON BLOCK', icon: Footprints },
+      { to: '/pacer', label: 'PACER', icon: Timer },
+      { to: '/progress', label: 'PROGRESS / PBs', icon: Trophy },
+    ],
+  },
+  {
+    title: 'Φαγητό',
+    items: [
+      { to: '/meals', label: 'ΓΕΥΜΑΤΑ', icon: BookOpen },
+      { to: '/foods', label: 'ΤΡΟΦΙΜΑ', icon: Apple },
+      { to: '/shopping', label: 'ΛΙΣΤΑ ΑΓΟΡΩΝ', icon: ShoppingCart },
+    ],
+  },
+  {
+    title: 'Έξοδα',
+    items: [
+      { to: '/expenses', label: 'ΕΞΟΔΑ', icon: Wallet },
+      { to: '/expense-analysis', label: 'ΑΝΑΛΥΣΗ ΕΞΟΔΩΝ', icon: ChartPie },
+      { to: '/products', label: 'ΠΡΟΙΟΝΤΑ', icon: ShoppingBag },
+    ],
+  },
+  {
+    title: 'Στατιστικά',
+    items: [
+      { to: '/weekly', label: 'WEEKLY STATS', icon: BarChart3 },
+      { to: '/monthly', label: 'MONTHLY STATS', icon: CalendarDays },
+    ],
+  },
+  { title: null, items: [{ to: '/settings', label: 'ΡΥΘΜΙΣΕΙΣ', icon: Settings }] },
 ]
 
-function NavList(props: { onNavigate?: () => void }) {
+const ITEMS = GROUPS.flatMap((g) => g.items)
+
+function SideContent(props: { onNavigate?: () => void }) {
   return (
-    <nav className="flex flex-col gap-1">
-      {NAV.map(({ to, label, icon: Icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={to === '/'}
-          onClick={props.onNavigate}
-          className={({ isActive }) =>
-            clsx(
-              'flex h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition',
-              isActive ? 'bg-accent-soft text-accent' : 'text-muted hover:translate-x-0.5 hover:bg-surface-2 hover:text-text',
-            )
-          }
-        >
-          <Icon size={18} />
-          {label}
-        </NavLink>
-      ))}
-    </nav>
+    <>
+      <div className="la-brand">
+        <span className="la-mark" aria-hidden />
+        Tracking
+      </div>
+      <nav className="la-nav">
+        {GROUPS.map((g, gi) => (
+          <div key={gi} className="la-groupwrap">
+            {g.title && <div className="la-group">{g.title}</div>}
+            {g.items.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/'}
+                onClick={props.onNavigate}
+                className={({ isActive }) => clsx('la-item', isActive && 'active')}
+              >
+                <Icon size={18} strokeWidth={1.8} />
+                {label}
+              </NavLink>
+            ))}
+          </div>
+        ))}
+      </nav>
+    </>
   )
 }
 
@@ -85,54 +125,48 @@ function BackButton() {
   )
 }
 
+/** The app frame: warm grey background, a floating sidebar card, content straight on the grey. */
 export function Layout() {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
-  const current = NAV.find((n) => (n.to === '/' ? pathname === '/' : pathname.startsWith(n.to)))
+  const current = ITEMS.find((n) => (n.to === '/' ? pathname === '/' : pathname.startsWith(n.to)))
 
   useEffect(() => setOpen(false), [pathname])
 
   return (
-    <div className="min-h-dvh lg:flex">
-      {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-line overflow-y-auto p-4 lg:flex">
-        <div className="px-3 pt-2 text-lg font-extrabold tracking-tight">Tracking</div>
-        <NavList />
-      </aside>
+    <div className="la">
+      <div className="la-shell">
+        <aside className="la-side">
+          <SideContent />
+        </aside>
 
-      {/* Mobile top bar */}
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 bg-bg/80 px-4 pt-[env(safe-area-inset-top)] backdrop-blur lg:hidden">
-        <button
-          type="button"
-          aria-label="Μενού"
-          onClick={() => setOpen(true)}
-          className="-ml-1 grid size-9 place-items-center rounded-full transition hover:bg-surface-2 active:scale-90"
-        >
-          <Menu size={22} />
-        </button>
-        <BackButton />
-        <span className="text-sm font-bold tracking-wide">{current?.label}</span>
-      </header>
+        <div className="la-col">
+          <header className="la-bar">
+            <button type="button" aria-label="Μενού" className="la-round" onClick={() => setOpen(true)}>
+              <Menu size={20} />
+            </button>
+            <BackButton />
+            <span className="la-bartitle">{current?.label}</span>
+          </header>
 
-      {/* Mobile drawer */}
-      {open && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="anim-fade absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <aside className="anim-from-left absolute inset-y-0 left-0 flex w-72 flex-col gap-6 overflow-y-auto overscroll-contain bg-surface p-4 pt-[max(1rem,env(safe-area-inset-top))]">
-            <div className="px-3 pt-2 text-lg font-extrabold tracking-tight">Tracking</div>
-            <NavList onNavigate={() => setOpen(false)} />
-          </aside>
+          {open && (
+            <div className="la-drawer">
+              <div className="anim-fade la-backdrop" onClick={() => setOpen(false)} />
+              <aside className="anim-from-left la-drawer-panel">
+                <SideContent onNavigate={() => setOpen(false)} />
+              </aside>
+            </div>
+          )}
+
+          <main className="la-main">
+            <div className="la-desktopback">
+              <BackButton />
+              <span>{current?.label}</span>
+            </div>
+            <Outlet />
+          </main>
         </div>
-      )}
-
-      <main className="mx-auto w-full min-w-0 max-w-5xl overflow-x-clip px-4 pb-[max(2rem,env(safe-area-inset-bottom))] lg:px-8 lg:py-6">
-        {/* Desktop top bar (mobile has its own header above) */}
-        <div className="mb-2 hidden h-9 items-center gap-2 lg:flex">
-          <BackButton />
-          <span className="text-sm font-bold tracking-wide text-muted">{current?.label}</span>
-        </div>
-        <Outlet />
-      </main>
+      </div>
     </div>
   )
 }

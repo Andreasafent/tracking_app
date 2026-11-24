@@ -1,70 +1,19 @@
-import { BookmarkPlus, Check, ListPlus, Pencil, X } from 'lucide-react'
+import { BookmarkPlus, Check, ChevronLeft, ChevronRight, ListPlus, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { FoodPicker } from '../components/FoodPicker'
-import { Ingredients } from '../components/Ingredients'
 import { SavedMealPicker } from '../components/SavedMealPicker'
-import {
-  Button,
-  ErrorNote,
-  Field,
-  Hero,
-  Loading,
-  NumberInput,
-  Segmented,
-  Sheet,
-  Stat,
-  Stepper,
-  TextInput,
-  Widget,
-} from '../components/ui'
-import { useFoods, useMealEntry, useSavedMeals, useSaveMeal, useSaveRow } from '../lib/api'
+import { Button, ErrorNote, Field, Loading, NumberInput, Segmented, TextInput, Sheet } from '../components/ui'
+import { useFoods, useMealEntry, useMeals, usePeriods, useSaveMeal, useTrainingPlans, useSavedMeals, useSaveRow } from '../lib/api'
 import type { Json, MealSlot } from '../lib/database.types'
-import { addDays, relativeDayLabel, today } from '../lib/dates'
+import { addDays, fmtDay, relativeDayLabel, today } from '../lib/dates'
 import { num } from '../lib/format'
-import {
-  addNutrients,
-  itemsOf,
-  itemsOfLines,
-  linesOf,
-  round1,
-  rowsOf,
-  SLOTS,
-  slotLabel,
-  ZERO,
-  type Nutrients,
-  type MealItem,
-  type Row,
-} from '../lib/meals'
+import { addNutrients, itemsOf, itemsOfLines, linesOf, round1, rowsOf, SLOTS, slotLabel, ZERO, type Nutrients, type Row, type MealItem } from '../lib/meals'
+import { intakeTarget } from '../lib/training'
 import { useSwipe } from '../lib/useSwipe'
+import '../styles/pages.css'
 
-interface Draft {
-  rows: Row[]
-  servings: number
-  name: string
-}
-
-const EMPTY: Draft = { rows: [], servings: 1, name: '' }
-
-// An unfinished meal is kept per slot until it's logged or cleared, so leaving the page loses nothing.
-// Logged meals are never loaded back here on their own: each log is a new entry. Editing one is
-// explicit (tapping it in MACROS opens ?entry=<id>).
-function loadDraft(slot: MealSlot): Draft {
-  try {
-    const raw = localStorage.getItem(`calc:${slot}`)
-    return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY
-  } catch {
-    return EMPTY
-  }
-}
-function storeDraft(slot: MealSlot, d: Draft) {
-  try {
-    localStorage.setItem(`calc:${slot}`, JSON.stringify(d))
-  } catch {
-    /* storage unavailable */
-  }
-}
-
+/** Builds a meal from foods and logs it. The unfinished meal is kept per slot, so leaving the page loses nothing. */
 export function Calculator() {
   const [params, setParams] = useSearchParams()
   const slot = (SLOTS.some((s) => s.value === params.get('slot')) ? params.get('slot') : 'breakfast') as MealSlot
@@ -151,6 +100,11 @@ export function Calculator() {
     setLogged(null)
   }
 
+  // What is left of the day's calories, before and after this meal (an edited meal doesn't count twice).
+  const dayMeals = useMeals(date).data ?? []
+  const period = usePeriods().data?.find((p) => p.start_date <= date && p.end_date >= date)
+  const target = intakeTarget(date, useTrainingPlans().data ?? [], period).kcal
+
   const lines = linesOf(draft.rows, foodById)
   const totals = lines.reduce((a, l) => addNutrients(a, l.n), ZERO)
   const servings = Math.max(1, draft.servings || 1)
@@ -185,103 +139,183 @@ export function Calculator() {
 
   if (editing && (entry.isLoading || (entry.data && loadedFor.current !== entry.data.id))) return <Loading />
 
+  const loggedOthers = dayMeals.reduce((a, m) => a + (m.id === entryId ? 0 : m.kcal), 0)
+  const dayLeft = target == null ? null : target - loggedOthers
+  const dayLeftAfter = dayLeft == null ? null : dayLeft - per.kcal
+
+  // Where the calories come from: protein and carbs 4 kcal/g, fat 9 kcal/g.
+  const energy = [per.protein * 4, per.carbs * 4, per.fat * 9]
+  const energySum = energy.reduce((a, b) => a + b, 0)
+  const shares = [
+    { name: 'Πρωτεΐνη', g: per.protein, color: '#17503B', e: energy[0] },
+    { name: 'Υδατάνθρακες', g: per.carbs, color: '#5FAE88', e: energy[1] },
+    { name: 'Λιπαρά', g: per.fat, color: '#131512', e: energy[2] },
+  ]
+
   return (
-    <div className="min-h-[calc(100dvh-4rem)] space-y-3" {...swipe}>
-      <Hero
-        top={
-          <div className="space-y-3">
-            <Stepper label={relativeDayLabel(date)} onPrev={() => go(-1)} onNext={() => go(1)} />
-            <Segmented
-              value={slot}
-              onChange={(v) => openSlot(v, date)}
-              options={SLOTS.map((s) => ({ value: s.value, label: s.label }))}
-            />
-          </div>
-        }
-        label={servings > 1 ? `ΘΕΡΜΙΔΕΣ / ΜΕΡΙΔΑ (÷${servings})` : 'ΘΕΡΜΙΔΕΣ'}
-        value={
-          <span key={date} className={`inline-block ${anim}`}>
-            {num(per.kcal, 0)}
-          </span>
-        }
-        unit="kcal"
-        sub={
-          <>
-            {servings > 1 && <div>Σύνολο συνταγής {num(totals.kcal, 0)} kcal</div>}
-            {editing && entry.data && (
-              <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent-soft py-1 pr-1 pl-3 text-xs font-semibold text-accent">
-                <Pencil size={12} /> Επεξεργασία γεύματος
-                <button
-                  type="button"
-                  aria-label="Έξοδος από επεξεργασία"
-                  onClick={() => setParam('entry', null)}
-                  className="grid size-5 place-items-center rounded-full transition hover:bg-accent hover:text-white"
-                >
-                  <X size={12} />
-                </button>
-              </span>
-            )}
-            {editing && !entry.isLoading && !entry.data && (
-              <div className="mt-2 text-xs text-bad">Το γεύμα δεν βρέθηκε (ίσως διαγράφηκε).</div>
-            )}
-          </>
-        }
-      />
+    <div className="da da-flat" {...swipe}>
+      <header className="da-top">
+        <div>
+          <h2 className="da-title">{relativeDayLabel(date)}</h2>
+          <div className="da-date">{fmtDay(date)}</div>
+        </div>
+        <div className="da-nav">
+          <button
+            type="button"
+            className="da-today"
+            disabled={date === today()}
+            onClick={() => {
+              setDir(date < today() ? 'next' : 'prev')
+              openSlot(slot, today())
+            }}
+          >
+            Σήμερα
+          </button>
+          <button type="button" aria-label="Προηγούμενη μέρα" onClick={() => go(-1)}>
+            <ChevronLeft size={18} />
+          </button>
+          <button type="button" aria-label="Επόμενη μέρα" onClick={() => go(1)}>
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </header>
+
+      <div className="ca-slot">
+        <Segmented value={slot} onChange={(v) => openSlot(v, date)} options={SLOTS.map((s) => ({ value: s.value, label: s.label }))} />
+      </div>
 
       <ErrorNote error={save.error ?? entry.error} />
 
-      <Widget title="Ανά μερίδα">
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
-          <Stat label="Πρωτεΐνη" value={num(per.protein, 1)} unit="g" />
-          <Stat label="Υδατάνθρ." value={num(per.carbs, 1)} unit="g" />
-          <Stat label="Λιπαρά" value={num(per.fat, 1)} unit="g" />
-          <Stat label="Σίδηρος" value={num(per.iron, 1)} unit="mg" />
-          <Stat label="Ω3" value={num(per.omega3, 2)} unit="g" />
-        </div>
-      </Widget>
+      <div key={date} className={anim}>
+        <div className="da-grid">
+          <section className="da-card da-dark da-span2">
+            <div className="da-row">
+              <span>{servings > 1 ? `Θερμίδες ανά μερίδα (÷${servings})` : 'Θερμίδες'}</span>
+              {editing && entry.data && (
+                <span className="da-chip">
+                  <Pencil size={12} /> Επεξεργασία
+                  <button type="button" aria-label="Έξοδος από επεξεργασία" onClick={() => setParam('entry', null)}>
+                    <X size={12} />
+                  </button>
+                </span>
+              )}
+            </div>
+            <div className="da-num da-hero">
+              {num(per.kcal, 0)}
+              <small>kcal</small>
+            </div>
+            {servings > 1 && <div className="da-caption">σύνολο συνταγής {num(totals.kcal, 0)} kcal</div>}
+            {dayLeft != null && (
+              <div className="da-caption ca-dayleft">
+                υπόλοιπο ημέρας <b>{num(dayLeft, 0)}</b>
+                {per.kcal > 0 && (
+                  <>
+                    {' '}
+                    → <b className={dayLeftAfter! < 0 ? 'over' : ''}>{num(dayLeftAfter, 0)}</b> μετά από αυτό
+                  </>
+                )}
+              </div>
+            )}
+            {editing && !entry.isLoading && !entry.data && (
+              <div className="da-notice">Το γεύμα δεν βρέθηκε (ίσως διαγράφηκε).</div>
+            )}
+          </section>
 
-      <Ingredients
-        lines={lines}
-        onAdd={() => setPicker(true)}
-        onAmount={(i, v) => update({ ...draft, rows: draft.rows.map((r, j) => (j === i ? { ...r, amount: v } : r)) })}
-        onRemove={(i) => update({ ...draft, rows: draft.rows.filter((_, j) => j !== i) })}
-        actions={
-          <button
-            type="button"
-            aria-label="Από αποθηκευμένα γεύματα"
-            title="Από αποθηκευμένα γεύματα"
-            className="grid size-8 place-items-center rounded-full bg-surface-2 text-muted transition hover:bg-line hover:text-text active:scale-90"
-            onClick={() => setSavedPicker(true)}
-          >
-            <ListPlus size={16} />
-          </button>
-        }
-      >
-        <div className="mt-2 border-t border-line pt-1">
-          <Field label="Μερίδες" hint="Π.χ. meal prep για 3 μέρες">
-            <NumberInput value={draft.servings} integer step={1} min={1} onChange={(v) => update({ ...draft, servings: v ?? 1 })} />
-          </Field>
-          <div className="pt-2">
-            <TextInput value={draft.name} onChange={(v) => update({ ...draft, name: v })} placeholder="Όνομα γεύματος (προαιρετικό)" />
-          </div>
+          <section className="da-card da-span2">
+            <h3>Ανά μερίδα</h3>
+            <div className="ma-stack">
+              {energySum > 0 && shares.map((s) => <i key={s.name} style={{ width: `${(s.e / energySum) * 100}%`, background: s.color }} />)}
+            </div>
+            <dl className="da-rows">
+              {shares.map((s) => (
+                <div key={s.name}>
+                  <dt>
+                    <span className="ma-dot" style={{ background: s.color }} />
+                    {s.name}
+                  </dt>
+                  <dd>
+                    {num(s.g, 1)} g{energySum > 0 ? <span className="da-dim"> · {Math.round((s.e / energySum) * 100)}%</span> : null}
+                  </dd>
+                </div>
+              ))}
+              <div>
+                <dt>Σίδηρος</dt>
+                <dd>{num(per.iron, 1)} mg</dd>
+              </div>
+              <div>
+                <dt>Ω3</dt>
+                <dd>{num(per.omega3, 2)} g</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="da-card da-full">
+            <div className="ma-head">
+              <h3>Υλικά{lines.length ? ` (${lines.length})` : ''}</h3>
+              <div className="ma-actions">
+                <button type="button" className="ma-btn" aria-label="Από αποθηκευμένα γεύματα" title="Από αποθηκευμένα γεύματα" onClick={() => setSavedPicker(true)}>
+                  <ListPlus size={16} />
+                </button>
+                <button type="button" className="ma-btn ma-btn-ink" aria-label="Προσθήκη τροφίμου" onClick={() => setPicker(true)}>
+                  <Plus size={16} />
+                </button>
+              </div>
+            </div>
+
+            {lines.length === 0 ? (
+              <p className="da-empty ca-empty">Πρόσθεσε τρόφιμα με το +</p>
+            ) : (
+              <ul className="ca-lines">
+                {lines.map((l, i) => (
+                  <li key={i} className="ca-line">
+                    <span className="ca-line-text">
+                      <span className="ca-line-name">{l.name}</span>
+                      <span className="ca-line-sub">
+                        {num(l.n.kcal, 0)} kcal · Π {num(l.n.protein, 1)} · Υ {num(l.n.carbs, 1)} · Λ {num(l.n.fat, 1)}
+                      </span>
+                    </span>
+                    <span className="ca-line-amt">
+                      <NumberInput
+                        value={l.amount}
+                        step={l.unit === 'piece' ? 1 : 10}
+                        unit={l.unit === 'piece' ? 'τεμ' : 'g'}
+                        onChange={(v) => update({ ...draft, rows: draft.rows.map((r, j) => (j === i ? { ...r, amount: v } : r)) })}
+                      />
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Αφαίρεση"
+                      className="ma-del"
+                      onClick={() => update({ ...draft, rows: draft.rows.filter((_, j) => j !== i) })}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="ca-fields">
+              <Field label="Μερίδες" hint="Π.χ. meal prep για 3 μέρες">
+                <NumberInput value={draft.servings} integer step={1} min={1} onChange={(v) => update({ ...draft, servings: v ?? 1 })} />
+              </Field>
+              <TextInput value={draft.name} onChange={(v) => update({ ...draft, name: v })} placeholder="Όνομα γεύματος (προαιρετικό)" />
+            </div>
+          </section>
         </div>
-      </Ingredients>
+      </div>
 
       {logged && (
-        <button
-          type="button"
-          onClick={() => navigate(`/macros?d=${date}`)}
-          className="anim-fade flex w-full items-center gap-2 rounded-2xl bg-good/15 px-4 py-3 text-left text-sm font-semibold text-good transition hover:bg-good/25"
-        >
+        <button type="button" onClick={() => navigate(`/macros?d=${date}`)} className="anim-fade ca-done">
           <Check size={16} />
-          <span className="flex-1">
+          <span>
             Καταχωρήθηκαν {num(logged.kcal, 0)} kcal στο {slotLabel(logged.slot)}
           </span>
-          <span className="text-xs">προβολή MACROS →</span>
+          <b>MACROS →</b>
         </button>
       )}
 
-      <div className="flex gap-2">
+      <div className="ca-actions">
         {editing ? (
           <Button variant="ghost" onClick={() => navigate(-1)}>
             Ακύρωση
@@ -310,13 +344,7 @@ export function Calculator() {
         }}
       />
 
-      <SaveAsSheet
-        open={saveAs}
-        onClose={() => setSaveAs(false)}
-        initialName={draft.name}
-        items={itemsOfLines(lines)}
-        servings={servings}
-      />
+      <SaveAsSheet open={saveAs} onClose={() => setSaveAs(false)} initialName={draft.name} items={itemsOfLines(lines)} servings={servings} />
 
       <FoodPicker
         open={picker}
@@ -334,8 +362,35 @@ export function Calculator() {
   )
 }
 
+export interface Draft {
+  rows: Row[]
+  servings: number
+  name: string
+}
+
+export const EMPTY: Draft = { rows: [], servings: 1, name: '' }
+
+// An unfinished meal is kept per slot until it's logged or cleared, so leaving the page loses nothing.
+// Logged meals are never loaded back here on their own: each log is a new entry. Editing one is
+// explicit (tapping it in MACROS opens ?entry=<id>).
+export function loadDraft(slot: MealSlot): Draft {
+  try {
+    const raw = localStorage.getItem(`calc:${slot}`)
+    return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY
+  } catch {
+    return EMPTY
+  }
+}
+export function storeDraft(slot: MealSlot, d: Draft) {
+  try {
+    localStorage.setItem(`calc:${slot}`, JSON.stringify(d))
+  } catch {
+    /* storage unavailable */
+  }
+}
+
 /** Saves the calculator's ingredients as a meal in ΓΕΥΜΑΤΑ (same name → that meal is updated). */
-function SaveAsSheet(props: { open: boolean; onClose: () => void; initialName: string; items: MealItem[]; servings: number }) {
+export function SaveAsSheet(props: { open: boolean; onClose: () => void; initialName: string; items: MealItem[]; servings: number }) {
   const saved = useSavedMeals().data ?? []
   const save = useSaveRow('saved_meals')
   const [name, setName] = useState('')

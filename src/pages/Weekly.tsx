@@ -1,8 +1,9 @@
-import { BarChart3, Brain, Dumbbell, HeartPulse, Salad } from 'lucide-react'
+import { BarChart3, Brain, ChevronLeft, ChevronRight, Dumbbell, HeartPulse, Salad } from 'lucide-react'
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import { TrendChart } from '../components/Charts'
-import { ErrorNote, Grid, Hero, Stepper, Widget } from '../components/ui'
+import { PageHeader } from '../components/PageHeader'
+import { ErrorNote, Grid, Hero, Widget } from '../components/ui'
 import { useSummaries } from '../lib/api'
 import { addDays, fmtRange, fmtShort, statsWeek, statsWeeksOfYear, today } from '../lib/dates'
 import { num, signed } from '../lib/format'
@@ -25,6 +26,7 @@ export function Weekly() {
   const first = stats.find((x) => x.s.weight != null)?.s
 
   const go = (from: string) => setParams({ w: from }, { replace: true })
+  const thisWeek = statsWeek(today()).from
   const upTo = stats.filter((x) => x.from <= today())
   const chartData = upTo.map((x) => ({
     label: fmtShort(x.from),
@@ -36,14 +38,25 @@ export function Weekly() {
 
   return (
     <div className="space-y-3">
-      <Hero
-        top={
-          <Stepper
-            label={`Εβδομάδα ${week.no} · ${fmtRange(week)}`}
-            onPrev={() => go(addDays(week.from, -7))}
-            onNext={() => go(addDays(week.from, 7))}
-          />
+      <PageHeader
+        title={`Εβδομάδα ${week.no}`}
+        sub={fmtRange(week)}
+        actions={
+          <>
+            <button type="button" className="da-today" disabled={week.from === thisWeek} onClick={() => go(thisWeek)}>
+              Τώρα
+            </button>
+            <button type="button" aria-label="Προηγούμενη εβδομάδα" onClick={() => go(addDays(week.from, -7))}>
+              <ChevronLeft size={18} />
+            </button>
+            <button type="button" aria-label="Επόμενη εβδομάδα" onClick={() => go(addDays(week.from, 7))}>
+              <ChevronRight size={18} />
+            </button>
+          </>
         }
+      />
+    
+      <Hero
         label="ΜΕΣΟΣ ΟΡΟΣ ΒΑΡΟΥΣ"
         value={num(cur.weight, 2)}
         unit="kg"
@@ -66,9 +79,9 @@ export function Weekly() {
           <Widget key={g.title} title={g.title} icon={ICONS[i]}>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
               {g.metrics.map((m) => (
-                <div key={m.label}>
-                  <dt className="text-[11px] font-medium text-muted">{m.label}</dt>
-                  <dd className="text-base font-semibold">
+                <div key={m.label} className="ui-stat">
+                  <dt className="ui-stat-label text-[11px] font-medium text-muted">{m.label}</dt>
+                  <dd className="ui-stat-value text-base font-semibold">
                     {m.value(cur, prev)}
                     {m.unit && <span className="ml-0.5 text-xs font-medium text-muted">{m.unit}</span>}
                   </dd>

@@ -1,0 +1,68 @@
+/* The app frame. */
+.la {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Manrope', 'Google Sans', ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: 'tnum' 1;
+}
+.la-shell { display: flex; gap: 12px; padding: 10px; align-items: flex-start; }
+.la-col { flex: 1; min-width: 0; }
+.la-main { max-width: 1100px; margin: 0 auto; padding-bottom: max(2rem, env(safe-area-inset-bottom)); }
+
+/* Sidebar card (desktop) */
+.la-side { display: none; }
+.la-nav { display: flex; flex-direction: column; }
+.la-brand { display: flex; align-items: center; gap: 12px; padding: 4px 14px 14px; font-family: 'Outfit', 'Manrope', sans-serif; font-size: 26px; font-weight: 300; letter-spacing: -0.02em; }
+.la-mark { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); position: relative; flex: none; }
+.la-mark::after { content: ''; position: absolute; inset: 7px; border-radius: 50%; border: 2px solid #f7f7f3; border-right-color: transparent; }
+.la-group { margin: 20px 0 6px 14px; font-size: 12px; font-weight: 500; color: var(--muted); }
+.la-item {
+  position: relative; display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 14px;
+  border-radius: 16px; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; color: var(--muted);
+  transition: background 0.15s, color 0.15s;
+}
+.la-item:hover { background: var(--surface-2); color: var(--text); }
+.la-item.active { background: var(--accent-soft); color: var(--accent); }
+.la-item.active::before { content: ''; position: absolute; left: -14px; top: 10px; bottom: 10px; width: 4px; border-radius: 0 4px 4px 0; background: var(--accent); }
+
+@media (min-width: 1024px) {
+  .la-shell { padding: 12px; }
+  .la-side {
+    display: flex; flex-direction: column; position: sticky; top: 12px; width: 264px; flex: none;
+    height: calc(100dvh - 24px); background: var(--surface); border-radius: 28px; padding: 20px 14px; overflow-y: auto;
+  }
+  .la-bar { display: none !important; }
+}
+
+/* Top bar (mobile) */
+.la-bar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; padding: 4px 2px 10px; background: var(--bg); padding-top: max(4px, env(safe-area-inset-top)); }
+.la-round { width: 42px; height: 42px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; flex: none; }
+.la-bartitle { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; }
+.la-desktopback { display: none; }
+@media (min-width: 1024px) {
+  .la-desktopback { display: flex; align-items: center; gap: 8px; height: 40px; margin-bottom: 4px; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; color: var(--muted); }
+}
+
+/* Drawer (mobile) */
+.la-drawer { position: fixed; inset: 0; z-index: 40; }
+.la-backdrop { position: absolute; inset: 0; background: rgba(19, 21, 18, 0.45); }
+.la-drawer-panel {
+  position: absolute; top: 10px; bottom: 10px; left: 10px; width: min(300px, 86vw); background: var(--surface);
+  border-radius: 28px; padding: 20px 14px; overflow-y: auto; overscroll-behavior: contain;
+  padding-top: max(20px, env(safe-area-inset-top));
+}
+
+/* The sidebar and drawer scroll, but without a visible scrollbar */
+.la-side, .la-drawer-panel { scrollbar-width: none; -ms-overflow-style: none; }
+.la-side::-webkit-scrollbar, .la-drawer-panel::-webkit-scrollbar { display: none; }
+
+/* Sign-in screen */
+.la-login { display: grid; place-items: center; padding: 16px; }
+.la-login-card { width: 100%; max-width: 400px; display: grid; gap: 10px; padding: 28px 24px 22px; border-radius: 32px; background: var(--surface); box-shadow: 0 30px 60px -36px rgba(19, 21, 18, 0.4); }
+.la-login-card .la-brand { padding: 0 0 2px; font-size: 32px; }
+.la-login-card .la-mark { width: 36px; height: 36px; }
+.la-login-card .la-mark::after { inset: 9px; }
+.la-login-sub { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+.la-login-switch { padding: 10px 0 2px; font-size: 13px; color: var(--muted); text-align: center; }
+.la-login-switch:hover { color: var(--text); }

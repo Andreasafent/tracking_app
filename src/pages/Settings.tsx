@@ -1,12 +1,12 @@
 import { Archive, ArchiveRestore, LogOut, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Button, ErrorNote, Field, Hero, Segmented, Select, Sheet, TextInput, Widget } from '../components/ui'
+import { PageHeader } from '../components/PageHeader'
+import { Button, ErrorNote, Field, Select, Sheet, TextInput, Widget } from '../components/ui'
 import { useActivities, useActivityUsage, useDeleteRow, useSaveRow } from '../lib/api'
 import type { Activity } from '../lib/database.types'
 import { num } from '../lib/format'
 import { supabase } from '../lib/supabase'
 
-type Theme = 'system' | 'light' | 'dark'
 type Unit = 'none' | 'km' | 'm'
 
 const UNITS: { value: Unit; label: string }[] = [
@@ -15,50 +15,16 @@ const UNITS: { value: Unit; label: string }[] = [
   { value: 'm', label: 'm' },
 ]
 
-function readTheme(): Theme {
-  try {
-    const t = localStorage.getItem('theme')
-    return t === 'light' || t === 'dark' ? t : 'system'
-  } catch {
-    return 'system'
-  }
-}
-
 export function SettingsPage() {
-  const [theme, setTheme] = useState<Theme>(readTheme)
   const activities = useActivities().data ?? []
   const save = useSaveRow('activities')
   const [name, setName] = useState('')
   const [unit, setUnit] = useState<Unit>('none')
   const [editing, setEditing] = useState<Activity | null>(null)
 
-  function applyTheme(t: Theme) {
-    setTheme(t)
-    try {
-      if (t === 'system') localStorage.removeItem('theme')
-      else localStorage.setItem('theme', t)
-    } catch {
-      /* storage unavailable */
-    }
-    if (t === 'system') delete document.documentElement.dataset.theme
-    else document.documentElement.dataset.theme = t
-  }
-
   return (
     <div className="space-y-3">
-      <Hero label="ΡΥΘΜΙΣΕΙΣ" value="⚙︎" />
-
-      <Widget title="Εμφάνιση">
-        <Segmented
-          value={theme}
-          onChange={applyTheme}
-          options={[
-            { value: 'system', label: 'Αυτόματο' },
-            { value: 'dark', label: 'Σκούρο' },
-            { value: 'light', label: 'Φωτεινό' },
-          ]}
-        />
-      </Widget>
+      <PageHeader title="Ρυθμίσεις" sub="δραστηριότητες και λογαριασμός" />
 
       <Widget title="Δραστηριότητες">
         <ErrorNote error={save.error} />
@@ -68,7 +34,7 @@ export function SettingsPage() {
               <button
                 type="button"
                 onClick={() => setEditing(a)}
-                className="-ml-2 flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-1.5 text-left transition hover:bg-surface-2"
+                className="ui-row -ml-2 flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-1.5 text-left transition hover:bg-surface-2"
               >
                 <span className={a.archived ? 'flex-1 truncate text-sm text-muted line-through' : 'flex-1 truncate text-sm font-semibold'}>
                   {a.name}

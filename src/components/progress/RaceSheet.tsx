@@ -206,7 +206,7 @@ export function RaceSheet(props: { race?: DistanceEffort; distances: PbDistance[
             />
           </Field>
           {runCustom && (
-            <div className="rounded-2xl bg-surface-2/60 px-3">
+            <div className="ui-group rounded-2xl bg-surface-2/60 px-3">
               <Field label="Custom απόσταση">
                 <NumberInput value={f.custom_km} onChange={(custom_km) => set({ custom_km })} unit="km" />
               </Field>
@@ -227,7 +227,7 @@ export function RaceSheet(props: { race?: DistanceEffort; distances: PbDistance[
             <Select value={f.tri_id} onChange={(tri_id) => set({ tri_id })} options={triOptions} />
           </Field>
           {triCustom && (
-            <div className="rounded-2xl bg-surface-2/60 px-3">
+            <div className="ui-group rounded-2xl bg-surface-2/60 px-3">
               <Field label="Κολύμβηση">
                 <NumberInput value={f.tri_swim} integer onChange={(tri_swim) => set({ tri_swim })} unit="m" />
               </Field>
@@ -250,7 +250,7 @@ export function RaceSheet(props: { race?: DistanceEffort; distances: PbDistance[
       </Field>
 
       {!future && tri && (
-        <div className="mt-2 rounded-2xl bg-surface-2/60 px-3">
+        <div className="ui-group mt-2 rounded-2xl bg-surface-2/60 px-3">
           {SPLITS.map((x) => (
             <Field key={x.key} label={x.label} hint={fmtLegPace(x.key, f.splits[x.key], legs) ?? undefined}>
               <DurationInput value={f.splits[x.key]} onChange={(v) => setSplit(x.key, v)} />

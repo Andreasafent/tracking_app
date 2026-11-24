@@ -1,7 +1,8 @@
-import { CalendarDays, Salad } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Salad } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import { TrendChart } from '../components/Charts'
-import { ErrorNote, Grid, Hero, Stepper, Widget } from '../components/ui'
+import { PageHeader } from '../components/PageHeader'
+import { ErrorNote, Grid, Hero, Widget } from '../components/ui'
 import { useSummaries } from '../lib/api'
 import { eachDay, fmtShort, MONTHS, monthBlocks, monthRange, parseISO, today } from '../lib/dates'
 import { num, signed } from '../lib/format'
@@ -25,6 +26,7 @@ export function Monthly() {
 
   const go = (y: number, mo: number) => setParams({ m: `${y}-${String(mo).padStart(2, '0')}` }, { replace: true })
   const next = month === 12 ? { y: year + 1, m: 1 } : { y: year, m: month + 1 }
+  const nowM = today().slice(0, 7)
 
   const days = eachDay(range.from, range.to).filter((d) => d <= today())
   const monthRows = inRange(rows, range)
@@ -36,14 +38,25 @@ export function Monthly() {
 
   return (
     <div className="space-y-3">
-      <Hero
-        top={
-          <Stepper
-            label={`${MONTHS[month - 1]} ${year}`}
-            onPrev={() => go(prevM.y, prevM.m)}
-            onNext={() => go(next.y, next.m)}
-          />
+      <PageHeader
+        title={MONTHS[month - 1]}
+        sub={year}
+        actions={
+          <>
+            <button type="button" className="da-today" disabled={m === nowM} onClick={() => setParams({}, { replace: true })}>
+              Τώρα
+            </button>
+            <button type="button" aria-label="Προηγούμενος μήνας" onClick={() => go(prevM.y, prevM.m)}>
+              <ChevronLeft size={18} />
+            </button>
+            <button type="button" aria-label="Επόμενος μήνας" onClick={() => go(next.y, next.m)}>
+              <ChevronRight size={18} />
+            </button>
+          </>
         }
+      />
+    
+      <Hero
         label="ΜΕΣΟΣ ΟΡΟΣ ΒΑΡΟΥΣ"
         value={num(total.weight, 2)}
         unit="kg"

@@ -1,9 +1,10 @@
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
+import { PageHeader } from '../components/PageHeader'
 import { FoodPicker } from '../components/FoodPicker'
 import { Ingredients } from '../components/Ingredients'
-import { Button, ErrorNote, Field, Hero, Loading, NumberInput, QuickAction, QuickActions, Stat, TextInput, Widget } from '../components/ui'
+import { Button, ErrorNote, Field, Hero, Loading, NumberInput, Stat, TextInput, Widget } from '../components/ui'
 import { useDeleteRow, useFoods, useSavedMeals, useSaveRow } from '../lib/api'
 import type { Json, SavedMeal } from '../lib/database.types'
 import { num } from '../lib/format'
@@ -29,11 +30,16 @@ export function Meals() {
   const list = (meals.data ?? []).filter((m) => norm(m.name).includes(norm(q)))
   return (
     <div className="space-y-3">
-      <Hero label="ΓΕΥΜΑΤΑ" value={num(meals.data?.length ?? 0, 0)} sub="αποθηκευμένα για γρήγορη προσθήκη στο MACROS">
-        <QuickActions>
-          <QuickAction icon={<Plus size={20} />} label="Νέο" onClick={() => open('new')} />
-        </QuickActions>
-      </Hero>
+      <PageHeader
+        title="Γεύματα"
+        sub={`${num(meals.data?.length ?? 0, 0)} αποθηκευμένα για γρήγορη προσθήκη στο MACROS`}
+        actions={
+          <button type="button" className="da-pillbtn" onClick={() => open('new')}>
+            <Plus size={16} /> Νέο
+          </button>
+        }
+      />
+    
       <ErrorNote error={meals.error} />
 
       <div className="relative">
@@ -42,7 +48,7 @@ export function Meals() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Αναζήτηση…"
-          className="h-11 w-full rounded-2xl bg-surface pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
+          className="ui-search h-11 w-full rounded-2xl bg-surface pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
 
@@ -61,7 +67,7 @@ export function Meals() {
                 <button
                   type="button"
                   onClick={() => open(m.id)}
-                  className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2"
+                  className="ui-row -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold">
@@ -175,7 +181,7 @@ function MealEditor(props: { meal: SavedMeal | null }) {
         onRemove={(i) => setRows((rs) => rs.filter((_, j) => j !== i))}
       />
 
-      <div className="flex gap-2">
+      <div className="ui-actionbar flex gap-2">
         {props.meal ? (
           <Button
             variant="danger"

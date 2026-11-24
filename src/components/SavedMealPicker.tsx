@@ -47,7 +47,7 @@ export function SavedMealPicker(props: {
                 type="button"
                 disabled={props.busy}
                 onClick={() => props.onPick(m)}
-                className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2 disabled:opacity-50"
+                className="ui-row -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2 disabled:opacity-50"
               >
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold">

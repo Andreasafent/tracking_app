@@ -82,7 +82,7 @@ export function FoodPicker(props: {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Αναζήτηση…"
-          className="h-11 w-full rounded-xl bg-surface-2 pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
+          className="ui-search h-11 w-full rounded-xl bg-surface-2 pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
       {added && (
@@ -90,20 +90,23 @@ export function FoodPicker(props: {
           <Check size={14} /> Προστέθηκε: {added}
         </div>
       )}
-      <ul role="listbox" className="divide-y divide-line">
+      <ul role="listbox" className="ui-opts divide-y divide-line">
         {list.map((f, i) => (
           <li key={f.id} id={`food-opt-${i}`} role="option" aria-selected={i === active}>
             <button
               type="button"
               onClick={() => pick(f)}
-              onMouseEnter={() => setActive(i)}
-              className={`-mx-2 flex w-[calc(100%+1rem)] items-center justify-between rounded-xl px-2 py-3 text-left transition ${
-                i === active ? 'bg-surface-2' : ''
+              onMouseMove={() => active !== i && setActive(i)}
+              className={`ui-opt -mx-2 flex w-[calc(100%+1rem)] items-center justify-between rounded-xl px-2 py-3 text-left transition ${
+                i === active ? 'on bg-surface-2' : ''
               }`}
             >
               <span className="text-sm font-semibold">{f.name}</span>
-              <span className="text-xs text-muted">
-                {num(f.kcal, 0)} kcal / {f.unit === 'piece' ? `${num(f.per_amount)} τεμ` : `${num(f.per_amount)}g`}
+              <span className="flex items-center gap-2">
+                <span className="text-xs text-muted">
+                  {num(f.kcal, 0)} kcal / {f.unit === 'piece' ? `${num(f.per_amount)} τεμ` : `${num(f.per_amount)}g`}
+                </span>
+                <kbd className="ui-opt-hint">↵</kbd>
               </span>
             </button>
           </li>

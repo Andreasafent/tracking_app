@@ -1,8 +1,10 @@
 import type { Expense, ExpenseCategory, ExpenseProduct, Recurrence } from './database.types'
 import { parseISO, toISO, type ISODate } from './dates'
-import { num } from './format'
 
-export const eur = (v: number | null | undefined) => (v == null ? '—' : `${num(v, 2)} €`)
+const money = new Intl.NumberFormat('el-GR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+/** 22,30 — money always shows two decimals, so a column of amounts lines up. */
+export const moneyNum = (v: number) => money.format(v)
+export const eur = (v: number | null | undefined) => (v == null ? '—' : `${money.format(v)} €`)
 
 export const RECURRENCES: { value: Recurrence; label: string }[] = [
   { value: 'weekly', label: 'Εβδομαδιαία' },

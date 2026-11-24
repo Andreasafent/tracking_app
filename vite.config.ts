@@ -14,8 +14,8 @@ export default defineConfig({
         name: 'Tracking',
         short_name: 'Tracking',
         description: 'Daily nutrition, recovery and training tracker',
-        theme_color: '#0b0b0f',
-        background_color: '#0b0b0f',
+        theme_color: '#e6e7e1',
+        background_color: '#e6e7e1',
         display: 'standalone',
         start_url: '/',
         icons: [

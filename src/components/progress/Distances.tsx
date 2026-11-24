@@ -94,7 +94,7 @@ export function DistancesTab(props: { tabs: ReactNode }) {
             >
               <div className="flex items-end justify-between gap-2">
                 <div>
-                  <div className="text-3xl font-bold tracking-tight tabular-nums">{fmtTime(best?.time_sec)}</div>
+                  <div className="ui-bignum text-3xl font-bold tracking-tight tabular-nums">{fmtTime(best?.time_sec)}</div>
                   <div className="text-xs text-muted">
                     {best ? `${fmtPace(best.time_sec, d.meters)} · ${fmtDMY(best.date)}` : 'Χωρίς χρόνο ακόμα'}
                   </div>
@@ -245,7 +245,7 @@ function DistanceSheet(props: {
     >
       <ErrorNote error={error} />
 
-      <div className="rounded-2xl bg-surface-2/60 px-3">
+      <div className="ui-group rounded-2xl bg-surface-2/60 px-3">
         <Field label="Ημερομηνία">
           <DateInput value={form.date} onChange={(date) => set({ date })} />
         </Field>
@@ -312,7 +312,7 @@ function DistanceSheet(props: {
                     })
                   }
                   className={clsx(
-                    'flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-1.5 text-left text-sm transition hover:bg-surface-2',
+                    'ui-row flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-1.5 text-left text-sm transition hover:bg-surface-2',
                     form.id === e.id && 'bg-accent-soft',
                   )}
                 >
@@ -350,7 +350,7 @@ function DistanceSheet(props: {
         </>
       )}
 
-      <details className="mt-5 rounded-2xl bg-surface-2/60 px-3 py-2">
+      <details className="ui-tile mt-5 rounded-2xl bg-surface-2/60 px-3 py-2">
         <summary className="py-1 text-sm font-semibold text-muted">Ρυθμίσεις απόστασης</summary>
         <div className="space-y-2 py-2">
           <TextInput value={name} onChange={setName} placeholder="Όνομα" />

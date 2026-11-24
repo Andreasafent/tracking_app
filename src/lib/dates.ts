@@ -110,6 +110,12 @@ export function fmtDayDMY(s: ISODate): string {
   return `${DAYS_SHORT[parseISO(s).getDay()]} ${fmtDMY(s)}`
 }
 
+/** ['Δευ', '28/09'] — the compact form for narrow columns. */
+export function fmtDayDM(s: ISODate): [string, string] {
+  const [, m, d] = s.split('-')
+  return [DAYS_SHORT[parseISO(s).getDay()], `${d}/${m}`]
+}
+
 export function fmtRangeDMY(r: Range): string {
   return `${fmtDMY(r.from)} – ${fmtDMY(r.to)}`
 }

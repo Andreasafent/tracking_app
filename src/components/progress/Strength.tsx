@@ -66,15 +66,15 @@ export function StrengthTab(props: { tabs: ReactNode }) {
       <ErrorNote error={exercises.error ?? logsQ.error} />
 
       {groups.length > 1 && (
-        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
+        <div className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
           {[{ value: 'all' as const, label: 'Όλα' }, ...groups].map((g) => (
             <button
               key={g.value}
               type="button"
               onClick={() => setFilter(g.value)}
               className={clsx(
-                'h-9 shrink-0 rounded-full px-4 text-sm font-semibold transition active:scale-95',
-                filter === g.value ? 'bg-accent text-white' : 'bg-surface text-muted hover:text-text',
+                'ui-chip h-9 shrink-0 rounded-full px-4 text-sm font-semibold transition active:scale-95',
+                filter === g.value ? 'on bg-accent text-white' : 'bg-surface text-muted hover:text-text',
               )}
             >
               {g.label}
@@ -99,19 +99,21 @@ export function StrengthTab(props: { tabs: ReactNode }) {
         <p className="py-8 text-center text-sm text-muted">Πρόσθεσε την πρώτη σου άσκηση με το «Άσκηση».</p>
       )}
 
-      {shown.map((g) => {
-        const items = list.filter((e) => e.muscle_group === g.value)
-        const last = logs.filter((l) => groupOf.get(l.exercise_id) === g.value).at(-1)
-        return (
-          <Widget key={g.value} title={g.label} action={last && <span className="text-xs text-muted">{ago(last.date, t)}</span>}>
-            <ul className="-mx-2">
-              {items.map((e) => (
-                <ExerciseRow key={e.id} exercise={e} logs={logsOf(e.id)} onClick={() => setOpen({ exercise: e })} />
-              ))}
-            </ul>
-          </Widget>
-        )
-      })}
+      <div className="grid items-start gap-3 md:grid-cols-2">
+        {shown.map((g) => {
+          const items = list.filter((e) => e.muscle_group === g.value)
+          const last = logs.filter((l) => groupOf.get(l.exercise_id) === g.value).at(-1)
+          return (
+            <Widget key={g.value} title={g.label} action={last && <span className="text-xs text-muted">{ago(last.date, t)}</span>}>
+              <ul className="-mx-2">
+                {items.map((e) => (
+                  <ExerciseRow key={e.id} exercise={e} logs={logsOf(e.id)} onClick={() => setOpen({ exercise: e })} />
+                ))}
+              </ul>
+            </Widget>
+          )
+        })}
+      </div>
 
       {open && (
         <ExerciseSheet exercise={open.exercise} group={open.group} allLogs={logs} onClose={() => setOpen(null)} />
@@ -132,7 +134,7 @@ function ExerciseRow(props: { exercise: Exercise; logs: ExerciseLog[]; onClick: 
       <button
         type="button"
         onClick={props.onClick}
-        className="flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left transition hover:bg-surface-2 active:scale-[0.99]"
+        className="ui-row flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left transition hover:bg-surface-2 active:scale-[0.99]"
       >
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold">{props.exercise.name}</div>
@@ -260,7 +262,7 @@ function ExerciseSheet(props: { exercise?: Exercise; group?: Group; allLogs: Exe
         </div>
       )}
 
-      <div className="rounded-2xl bg-surface-2/60 px-3">
+      <div className="ui-group rounded-2xl bg-surface-2/60 px-3">
         <Field label="Ημερομηνία" hint={existing ? 'Υπάρχει ήδη καταγραφή — θα ενημερωθεί' : undefined}>
           <DateInput value={form.date} onChange={(date) => set({ date })} />
         </Field>
@@ -321,7 +323,7 @@ function ExerciseSheet(props: { exercise?: Exercise; group?: Group; allLogs: Exe
                     set({ date: l.date, weight: l.weight, reps: l.reps, sets: l.sets, notes: l.notes ?? '' })
                   }
                   className={clsx(
-                    'flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-1.5 text-left text-sm transition hover:bg-surface-2',
+                    'ui-row flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-1.5 text-left text-sm transition hover:bg-surface-2',
                     l.date === form.date && 'bg-accent-soft',
                   )}
                 >
@@ -348,7 +350,7 @@ function ExerciseSheet(props: { exercise?: Exercise; group?: Group; allLogs: Exe
       )}
 
       {ex && (
-        <details className="mt-5 rounded-2xl bg-surface-2/60 px-3 py-2">
+        <details className="ui-tile mt-5 rounded-2xl bg-surface-2/60 px-3 py-2">
           <summary className="py-1 text-sm font-semibold text-muted">Ρυθμίσεις άσκησης</summary>
           <div className="space-y-2 py-2">
             <TextInput value={name} onChange={setName} placeholder="Όνομα" />

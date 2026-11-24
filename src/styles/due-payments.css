@@ -1,0 +1,34 @@
+/* Payments due: a soft tile per payment, thin numerals, an ink pay button.
+   Only reads the app's colour variables, so it follows whichever layout it sits in. */
+.due { background: var(--surface); border-radius: 28px; padding: 16px 12px 12px; container-type: inline-size; }
+.due-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 8px 2px; }
+.due-head h3 { margin: 0; font-family: 'Outfit', 'Manrope', sans-serif; font-weight: 300; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1; }
+.due-count { font-family: 'Outfit', 'Manrope', sans-serif; font-weight: 200; font-size: 30px; line-height: 1; letter-spacing: -0.03em; color: var(--muted); }
+.due ul { list-style: none; margin: 0; padding: 0; }
+.due-tile { background: var(--surface-2); border-radius: 18px; padding: 10px 10px 10px 16px; margin-top: 6px; display: grid; gap: 6px; }
+.due-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.due-name { font-size: 15px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.due-amount { font-family: 'Outfit', 'Manrope', sans-serif; font-weight: 300; font-size: 22px; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }
+.due-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.due-meta { font-size: 12.5px; color: var(--muted); min-width: 0; }
+.due-meta b { font-weight: 700; }
+.due-meta b.now { color: var(--warn); }
+.due-meta b.late { color: var(--bad); }
+.due-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.due-skip { width: 36px; height: 36px; border-radius: 50%; background: var(--surface); color: var(--muted); display: grid; place-items: center; transition: transform 0.15s, background 0.15s; }
+.due-skip:hover { background: var(--line); color: var(--text); }
+.due-pay { height: 36px; padding: 0 14px; border-radius: 999px; background: var(--text); color: var(--surface); display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; transition: transform 0.15s; }
+.due-skip:active, .due-pay:active { transform: scale(0.95); }
+.due-skip:disabled { opacity: 0.4; }
+.due-more { display: block; width: 100%; margin-top: 8px; height: 38px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.due-more:hover { background: var(--surface-2); color: var(--text); }
+
+/* Wide enough: one line per payment — name over date on the left, amount and buttons on the right */
+@container (min-width: 520px) {
+  .due-tile { grid-template-columns: 1fr auto auto; grid-template-areas: 'name amount actions' 'meta amount actions'; align-items: center; column-gap: 16px; row-gap: 0; padding: 8px 10px 8px 16px; }
+  .due-top, .due-bottom { display: contents; }
+  .due-name { grid-area: name; }
+  .due-meta { grid-area: meta; }
+  .due-amount { grid-area: amount; }
+  .due-actions { grid-area: actions; margin-left: 0; }
+}

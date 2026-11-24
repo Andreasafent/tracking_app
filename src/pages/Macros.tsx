@@ -1,38 +1,36 @@
-import { Calculator, ChevronRight, Copy, ListPlus, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import clsx from 'clsx'
+import { Calculator, ChevronLeft, ChevronRight, Copy, ListPlus, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { SavedMealPicker } from '../components/SavedMealPicker'
-import {
-  Button,
-  ErrorNote,
-  Field,
-  Hero,
-  MacroRing,
-  NumberInput,
-  Segmented,
-  Sheet,
-  Stepper,
-  TextInput,
-  Widget,
-} from '../components/ui'
+import { Button, ErrorNote, Sheet, Segmented, TextInput, Field, NumberInput } from '../components/ui'
 import { useCopyMeals, useDeleteMeal, useFoods, useMeals, usePeriods, useSaveMeal, useTrainingPlans } from '../lib/api'
 import type { Json, MealEntry, MealSlot } from '../lib/database.types'
-import { addDays, relativeDayLabel, type ISODate } from '../lib/dates'
+import { addDays, fmtDay, relativeDayLabel, today, type ISODate } from '../lib/dates'
 import { num } from '../lib/format'
 import { entryFromRecipe, itemsOf, SLOTS, slotLabel } from '../lib/meals'
 import { intakeTarget } from '../lib/training'
 import { useDateParam } from '../lib/useDateParam'
 import { useSwipe } from '../lib/useSwipe'
+import { NutRings } from '../components/ChartParts'
+import '../styles/pages.css'
 
-const total = (rows: MealEntry[], k: 'kcal' | 'protein' | 'carbs' | 'fat') =>
-  rows.reduce((a, r) => a + (r[k] ?? 0), 0)
+const total = (rows: MealEntry[], k: 'kcal' | 'protein' | 'carbs' | 'fat') => rows.reduce((a, r) => a + (r[k] ?? 0), 0)
 
+/** The day's meals by slot, with calories and macros against the targets. */
 export function Macros() {
   const [date, setDate] = useDateParam()
+  const navigate = useNavigate()
   const meals = useMeals(date)
   const prevMeals = useMeals(addDays(date, -1)).data ?? []
   const copyMeals = useCopyMeals()
   const deleteMeal = useDeleteMeal()
+  const foods = useFoods().data ?? []
+  const insertMeal = useSaveMeal()
+  const period = usePeriods().data?.find((p) => p.start_date <= date && p.end_date >= date)
+  const intake = intakeTarget(date, useTrainingPlans().data ?? [], period)
+  const [inserting, setInserting] = useState<MealSlot | null>(null)
+  const [editing, setEditing] = useState<{ slot: MealSlot; entry?: MealEntry } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   useEffect(() => {
     if (!confirmDelete) return
@@ -40,16 +38,7 @@ export function Macros() {
     return () => clearTimeout(t)
   }, [confirmDelete])
 
-  // The calculator always starts a new entry; logged meals are edited by tapping them below.
-  const openCalculator = (slot: MealSlot) => navigate(`/calculator?slot=${slot}&d=${date}`)
-  // Inserting a saved meal (ΓΕΥΜΑΤΑ) logs one serving of it, priced with today's food values.
-  const foods = useFoods().data ?? []
-  const insertMeal = useSaveMeal()
-  const [inserting, setInserting] = useState<MealSlot | null>(null)
-  const period = usePeriods().data?.find((p) => p.start_date <= date && p.end_date >= date)
-  const [editing, setEditing] = useState<{ slot: MealSlot; entry?: MealEntry } | null>(null)
-  const navigate = useNavigate()
-  // Same day-swipe behaviour as ΓΕΝΙΚΑ: the new day slides in from the side you swiped towards.
+  // The new day slides in from the side you swiped towards.
   const [dir, setDir] = useState<'next' | 'prev' | null>(null)
   const go = (days: number) => {
     setDir(days > 0 ? 'next' : 'prev')
@@ -60,210 +49,226 @@ export function Macros() {
 
   const rows = meals.data ?? []
   const kcal = total(rows, 'kcal')
-  // Training plan's target for the day → TARGETS period → none (shown as a warning).
-  const intake = intakeTarget(date, useTrainingPlans().data ?? [], period)
   const target = intake.kcal
   const remaining = target == null ? null : target - kcal
+  const eaten = target ? Math.min(1, kcal / target) : 0
+  const openCalculator = (slot: MealSlot) => navigate(`/calculator?slot=${slot}&d=${date}`)
+  const macros = [
+    { key: 'protein', name: 'Πρωτεΐνη', value: total(rows, 'protein'), target: period?.protein_target ?? null },
+    { key: 'carbs', name: 'Υδατάνθρακες', value: total(rows, 'carbs'), target: period?.carbs_target ?? null },
+    { key: 'fat', name: 'Λιπαρά', value: total(rows, 'fat'), target: period?.fat_target ?? null },
+  ]
 
   return (
-    <div className="min-h-[calc(100dvh-4rem)] space-y-3" {...swipe}>
-      <Hero
-        top={<Stepper label={relativeDayLabel(date)} onPrev={() => go(-1)} onNext={() => go(1)} />}
-        label="ΘΕΡΜΙΔΕΣ"
-        value={
-          <span key={date} className={`inline-block ${anim}`}>
-            {num(kcal, 0)}
-          </span>
-        }
-        unit="kcal"
-        sub={
-          target == null ? (
-            <button
-              type="button"
-              onClick={() => navigate('/training')}
-              className="mx-auto flex items-center gap-1 rounded-full bg-warn/15 px-3 py-1 text-xs font-semibold text-warn transition hover:bg-warn/25"
-            >
-              <TriangleAlert size={14} />
-              Δεν υπάρχει στόχος θερμίδων για αυτή τη μέρα
-              <ChevronRight size={14} />
-            </button>
-          ) : (
-            <>
-              στόχος {num(target, 0)}
-              {intake.source === 'training' && ' (training plan)'} ·{' '}
-              <b className={remaining! < 0 ? 'text-bad' : 'text-good'}>
-                {remaining! < 0 ? `+${num(-remaining!, 0)} πάνω` : `${num(remaining, 0)} απομένουν`}
-              </b>
-            </>
-          )
-        }
-      />
+    <div className="da da-flat" {...swipe}>
+      <header className="da-top">
+        <div>
+          <h2 className="da-title">{relativeDayLabel(date)}</h2>
+          <div className="da-date">{fmtDay(date)}</div>
+        </div>
+        <div className="da-nav">
+          <button
+            type="button"
+            className="da-today"
+            disabled={date === today()}
+            onClick={() => {
+              setDir(date < today() ? 'next' : 'prev')
+              setDate(today())
+            }}
+          >
+            Σήμερα
+          </button>
+          <button type="button" aria-label="Προηγούμενη μέρα" onClick={() => go(-1)}>
+            <ChevronLeft size={18} />
+          </button>
+          <button type="button" aria-label="Επόμενη μέρα" onClick={() => go(1)}>
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      </header>
 
       <ErrorNote error={meals.error ?? copyMeals.error ?? deleteMeal.error} />
 
-      <div key={date} className={`space-y-3 ${anim}`}>
-        {/* Day breakdown */}
-        <Widget title="Κατανομή ημέρας">
-          <div className="flex h-3 gap-0.5 overflow-hidden rounded-full bg-surface-2">
-            {SLOTS.map((s) => {
-              const k = total(rows.filter((r) => r.slot === s.value), 'kcal')
-              return kcal > 0 && k > 0 ? (
-                <div key={s.value} style={{ width: `${(k / kcal) * 100}%`, background: s.color }} />
-              ) : null
-            })}
-          </div>
-          <div className="mt-3 grid grid-cols-4 gap-2">
-            {SLOTS.map((s) => {
-              const k = total(rows.filter((r) => r.slot === s.value), 'kcal')
-              return (
-                <div key={s.value}>
-                  <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted">
-                    <span className="size-2 rounded-full" style={{ background: s.color }} />
-                    {s.label}
-                  </div>
-                  <div className="text-sm font-semibold">{num(k, 0)}</div>
-                </div>
-              )
-            })}
-          </div>
-          <div className="mt-4 grid grid-cols-3 justify-items-center gap-1 border-t border-line pt-4">
-            <MacroRing label="Πρωτεΐνη" value={total(rows, 'protein')} target={period?.protein_target} unit="g" over="good" size={88} />
-            <MacroRing label="Υδατάνθρ." value={total(rows, 'carbs')} target={period?.carbs_target} unit="g" over="bad" size={88} />
-            <MacroRing label="Λιπαρά" value={total(rows, 'fat')} target={period?.fat_target} unit="g" over="bad" size={88} />
-          </div>
-        </Widget>
+      <div key={date} className={anim}>
+        <div className="da-grid">
+          <section className="da-card da-dark da-span2">
+            <div className="da-row">
+              <span>Θερμίδες</span>
+              <button type="button" className="da-arrow" aria-label="Calculator" onClick={() => navigate(`/calculator?d=${date}`)}>
+                <Calculator size={18} />
+              </button>
+            </div>
+            <div className="da-num da-hero">
+              {num(kcal, 0)}
+              <small>kcal</small>
+            </div>
+            <div className="da-bar" style={{ color: '#9AD8B8' }}>
+              <i style={{ width: `${eaten * 100}%` }} />
+            </div>
+            <div className="da-caption">
+              {target == null ? (
+                'χωρίς στόχο'
+              ) : (
+                <>
+                  στόχος {num(target, 0)}
+                  {intake.source === 'training' && ' (training plan)'} ·{' '}
+                  <b>{remaining! < 0 ? `+${num(-remaining!, 0)} πάνω` : `${num(remaining, 0)} απομένουν`}</b>
+                </>
+              )}
+            </div>
+            {target == null && (
+              <button type="button" className="da-notice" onClick={() => navigate('/training')}>
+                <TriangleAlert size={14} /> Δεν υπάρχει στόχος θερμίδων για αυτή τη μέρα
+              </button>
+            )}
+          </section>
 
-        <div className="grid gap-3 lg:grid-cols-2">
+          <section className="da-card da-span2">
+            <h3>Θρεπτικά</h3>
+            <div className="da-nut">
+              <NutRings macros={macros} colors={['#17503B', '#5FAE88', '#131512']} track="#e3e4dd" className="da-rings" />
+              <dl className="da-ledger">
+                {macros.map((m) => (
+                  <div key={m.key}>
+                    <dt>{m.name}</dt>
+                    <dd>
+                      {num(m.value, 0)}
+                      <span>{m.target ? ` / ${num(m.target, 0)}` : ''} g</span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </section>
+
+          <section className="da-card da-full">
+            <h3>Κατανομή ημέρας</h3>
+            <div className="ma-stack">
+              {SLOTS.map((s) => {
+                const k = total(rows.filter((r) => r.slot === s.value), 'kcal')
+                return kcal > 0 && k > 0 ? <i key={s.value} style={{ width: `${(k / kcal) * 100}%`, background: s.color }} /> : null
+              })}
+            </div>
+            <div className="ma-legend">
+              {SLOTS.map((s) => (
+                <div key={s.value}>
+                  <span className="ma-dot" style={{ background: s.color }} />
+                  <span className="da-dim">{s.label}</span>
+                  <b>{num(total(rows.filter((r) => r.slot === s.value), 'kcal'), 0)}</b>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {SLOTS.map((s) => {
             const entries = rows.filter((r) => r.slot === s.value)
             // Breakfast/lunch/dinner can repeat yesterday's meal in one tap (snacks vary too much).
             const yesterday = s.value === 'snack' ? [] : prevMeals.filter((r) => r.slot === s.value)
+            const act = (fn: () => void) => (e: React.MouseEvent) => {
+              e.stopPropagation()
+              fn()
+            }
             return (
-              <Widget
+              <section
                 key={s.value}
-                title={s.value === 'snack' && entries.length ? `${s.label} (${entries.length})` : s.label}
-                icon={<span className="block size-2.5 rounded-full" style={{ background: s.color }} />}
+                className="da-card da-span2 da-click"
+                role="button"
+                tabIndex={0}
                 onClick={() => openCalculator(s.value)}
-                action={
-                  <div className="flex gap-1">
+                onKeyDown={(e) => {
+                  if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault()
+                    openCalculator(s.value)
+                  }
+                }}
+              >
+                <div className="ma-head">
+                  <h3>
+                    <span className="ma-dot" style={{ background: s.color }} />
+                    {s.value === 'snack' && entries.length ? `${s.label} (${entries.length})` : s.label}
+                  </h3>
+                  <div className="ma-actions">
                     {s.value !== 'snack' && (
                       <button
                         type="button"
+                        className="ma-btn"
                         aria-label="Ίδιο με χθες"
-                        title={
-                          yesterday.length
-                            ? `Ίδιο με χθες (${num(total(yesterday, 'kcal'), 0)} kcal)`
-                            : 'Χθες δεν υπάρχει καταχώρηση'
-                        }
+                        title={yesterday.length ? `Ίδιο με χθες (${num(total(yesterday, 'kcal'), 0)} kcal)` : 'Χθες δεν υπάρχει καταχώρηση'}
                         disabled={!yesterday.length || copyMeals.isPending}
-                        className="grid size-8 place-items-center rounded-full bg-surface-2 text-muted transition hover:bg-line hover:text-text active:scale-90 disabled:opacity-30 disabled:hover:bg-surface-2"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          copyMeals.mutate({ entries: yesterday, date })
-                        }}
+                        onClick={act(() => copyMeals.mutate({ entries: yesterday, date }))}
                       >
                         <Copy size={15} />
                       </button>
                     )}
                     <button
                       type="button"
+                      className="ma-btn"
                       aria-label="Από αποθηκευμένα γεύματα"
                       title="Από αποθηκευμένα γεύματα"
-                      className="grid size-8 place-items-center rounded-full bg-surface-2 text-muted transition hover:bg-line hover:text-text active:scale-90"
-                      onClick={(e) => {
-                        e.stopPropagation()
+                      onClick={act(() => {
                         insertMeal.reset()
                         setInserting(s.value)
-                      }}
+                      })}
                     >
                       <ListPlus size={16} />
                     </button>
-                    <button
-                      type="button"
-                      aria-label="Προσθήκη"
-                      className="grid size-8 place-items-center rounded-full bg-surface-2 text-muted transition hover:bg-line hover:text-text active:scale-90"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setEditing({ slot: s.value })
-                      }}
-                    >
+                    <button type="button" className="ma-btn" aria-label="Προσθήκη" onClick={act(() => setEditing({ slot: s.value }))}>
                       <Plus size={16} />
                     </button>
-                    <button
-                      type="button"
-                      aria-label="Calculator"
-                      className="grid size-8 place-items-center rounded-full bg-accent text-white transition hover:brightness-110 active:scale-90"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        openCalculator(s.value)
-                      }}
-                    >
+                    <button type="button" className="ma-btn ma-btn-ink" aria-label="Calculator" onClick={act(() => openCalculator(s.value))}>
                       <Calculator size={15} />
                     </button>
                   </div>
-                }
-              >
-                <div className="flex items-baseline gap-3">
-                  <span className="text-2xl font-bold">{num(total(entries, 'kcal'), 0)}</span>
-                  <span className="text-xs text-muted">kcal</span>
-                  <span className="ml-auto text-xs text-muted">
-                    Π {num(total(entries, 'protein'), 1)} · Υ {num(total(entries, 'carbs'), 1)} · Λ{' '}
-                    {num(total(entries, 'fat'), 1)}
+                </div>
+
+                <div className="ma-sum">
+                  <span className="da-num ma-kcal">{num(total(entries, 'kcal'), 0)}</span>
+                  <span className="da-dim">kcal</span>
+                  <span className="da-dim ma-pul">
+                    Π {num(total(entries, 'protein'), 1)} · Υ {num(total(entries, 'carbs'), 1)} · Λ {num(total(entries, 'fat'), 1)}
                   </span>
                 </div>
+
                 {entries.length > 0 && (
-                  <ul className="mt-3 divide-y divide-line">
+                  <ul className="ma-entries">
                     {entries.map((e, i) => {
                       const items = itemsOf(e.items)
                       const armed = confirmDelete === e.id
                       return (
-                        <li key={e.id} className="flex items-center gap-1">
+                        <li key={e.id} className="ma-entry">
                           <button
                             type="button"
-                            onClick={(ev) => {
-                              ev.stopPropagation()
+                            className="ma-entry-main"
+                            onClick={act(() => {
                               // Calculator meals reopen in the calculator with their ingredients; quick entries in the form.
                               if (items.length) navigate(`/calculator?entry=${e.id}`)
                               else setEditing({ slot: s.value, entry: e })
-                            }}
-                            className="-ml-2 flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-2 text-left transition hover:bg-surface-2"
+                            })}
                           >
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm">
+                            <span className="ma-entry-text">
+                              <span className="ma-entry-name">
                                 {e.name || (s.value === 'snack' ? `Snack ${i + 1}` : 'Καταχώρηση')}
-                                {e.servings > 1 && <span className="text-muted"> · 1/{num(e.servings, 0)} μερίδα</span>}
+                                {e.servings > 1 && <span className="da-dim"> · 1/{num(e.servings, 0)} μερίδα</span>}
                               </span>
                               {items.length > 0 && (
-                                <span className="block truncate text-[11px] text-muted">
+                                <span className="ma-entry-sub">
                                   {items.map((it) => `${it.food} ${num(it.amount, 0)}${it.unit === 'piece' ? 'τεμ' : 'g'}`).join(', ')}
                                 </span>
                               )}
                             </span>
-                            <span className="hidden text-xs text-muted sm:inline">
-                              Π {num(e.protein, 1)} · Υ {num(e.carbs, 1)} · Λ {num(e.fat, 1)}
-                            </span>
-                            <span className="w-12 text-right text-sm font-semibold">{num(e.kcal, 0)}</span>
-                            {items.length ? (
-                              <Calculator size={13} className="shrink-0 text-muted" />
-                            ) : (
-                              <Pencil size={13} className="shrink-0 text-muted" />
-                            )}
+                            <span className="ma-entry-kcal">{num(e.kcal, 0)}</span>
+                            {items.length ? <Calculator size={13} className="ma-ico" /> : <Pencil size={13} className="ma-ico" />}
                           </button>
                           <button
                             type="button"
                             aria-label={armed ? 'Επιβεβαίωση διαγραφής' : 'Διαγραφή'}
                             disabled={deleteMeal.isPending}
-                            onClick={(ev) => {
-                              ev.stopPropagation()
+                            className={clsx('ma-del', armed && 'armed')}
+                            onClick={act(() => {
                               // Two taps: the first arms the button, the second deletes.
                               if (armed) deleteMeal.mutate(e.id, { onSettled: () => setConfirmDelete(null) })
                               else setConfirmDelete(e.id)
-                            }}
-                            className={
-                              armed
-                                ? 'anim-fade h-8 shrink-0 rounded-full bg-bad px-3 text-xs font-semibold text-white transition active:scale-95'
-                                : 'grid size-8 shrink-0 place-items-center rounded-full text-muted transition hover:bg-bad/15 hover:text-bad active:scale-90'
-                            }
+                            })}
                           >
                             {armed ? 'Διαγραφή;' : <Trash2 size={14} />}
                           </button>
@@ -272,7 +277,7 @@ export function Macros() {
                     })}
                   </ul>
                 )}
-              </Widget>
+              </section>
             )
           })}
         </div>
@@ -285,6 +290,7 @@ export function Macros() {
         error={insertMeal.error}
         onClose={() => setInserting(null)}
         onPick={(m) => {
+          // Inserting a saved meal logs one serving of it, priced with today's food values.
           const e = entryFromRecipe(itemsOf(m.items), m.servings, foods)
           insertMeal.mutate(
             { ...e, date, slot: inserting!, name: m.name, items: e.items as unknown as Json, servings: m.servings },
@@ -303,7 +309,7 @@ export function Macros() {
   )
 }
 
-function MealSheet(props: { date: ISODate; editing: { slot: MealSlot; entry?: MealEntry } | null; onClose: () => void }) {
+export function MealSheet(props: { date: ISODate; editing: { slot: MealSlot; entry?: MealEntry } | null; onClose: () => void }) {
   const save = useSaveMeal()
   const del = useDeleteMeal()
   const [slot, setSlot] = useState<MealSlot>('breakfast')

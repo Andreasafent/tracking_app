@@ -1,0 +1,152 @@
+/* The shared UI: sheets, buttons, form controls, cards and heroes. The components carry ui-* class names for this. */
+
+/* The Enter hint of a picker row: hidden until the row is the active one */
+.ui-opt-hint { display: none; }
+
+/* ── Sheet: a floating card with room around it, a handle, a big light title, no divider lines */
+.la .ui-sheet { padding: 10px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+.la .ui-backdrop { background: rgba(19, 21, 18, 0.42); backdrop-filter: none; }
+.la .ui-sheet-panel { border-radius: 32px; max-height: calc(100dvh - 20px); background: var(--surface); box-shadow: 0 30px 60px -30px rgba(19, 21, 18, 0.5); }
+.la .ui-sheet-panel::before { content: ''; display: block; flex: none; width: 38px; height: 4px; border-radius: 2px; background: var(--line); margin: 10px auto 0; }
+.la .ui-sheet-head { border: 0; padding: 12px 22px 4px; align-items: flex-start; }
+.la .ui-sheet-title { font-family: 'Outfit', 'Manrope', sans-serif; font-weight: 300; font-size: 30px; line-height: 1.1; letter-spacing: -0.02em; padding-top: 4px; }
+.la .ui-sheet-close { width: 40px; height: 40px; background: var(--surface-2); color: var(--text); }
+.la .ui-sheet-close:hover { background: var(--line); }
+.la .ui-sheet-body { padding: 10px 22px 18px; }
+.la .ui-sheet-foot { border: 0; padding: 6px 22px 22px; }
+@media (min-width: 1024px) {
+  .la .ui-sheet-panel::before { display: none; }
+  .la .ui-sheet-head { padding-top: 24px; }
+}
+
+/* ── Buttons: ink pills; ghost is an outline; danger is a soft red */
+.la .ui-btn { height: 54px; padding: 0 28px; font-size: 15px; }
+.la .ui-btn-primary { background: var(--text); color: var(--surface); }
+.la .ui-btn-primary:hover { filter: none; background: #2b2e29; }
+.la .ui-btn-ghost { background: transparent; box-shadow: inset 0 0 0 1.5px var(--text); color: var(--text); }
+.la .ui-btn-ghost:hover { background: var(--surface-2); }
+.la .ui-btn-danger { background: #f1dad7; color: #a63a36; padding: 0 20px; }
+.la .ui-btn-danger:hover { background: #ecc9c5; }
+
+/* ── Fields: each is its own soft tile; values are big and thin */
+.la .ui-field { background: var(--surface-2); border: 0; border-radius: 22px; padding: 12px 14px 12px 20px; margin-top: 8px; }
+.la .ui-num-input { background: transparent; width: 104px; height: 46px; padding: 0 6px; font-family: 'Outfit', 'Manrope', sans-serif; font-weight: 300; font-size: 30px; letter-spacing: -0.02em; border-radius: 12px; }
+.la .ui-num-input::placeholder { color: var(--muted); opacity: 0.6; }
+.la .ui-num-input:focus { box-shadow: inset 0 -2px 0 var(--accent); }
+.la .ui-unit { font-size: 13px; }
+.la .ui-text { height: 54px; border-radius: 20px; padding: 0 20px; font-size: 16px; }
+.la .ui-select { background: var(--surface); height: 44px; border-radius: 999px; padding: 0 16px; }
+.la .ui-date { background: var(--surface); height: 44px; border-radius: 999px; padding: 0 18px; }
+.la .ui-box { background: var(--surface); }
+.la .ui-step { background: var(--surface); }
+.la .ui-step:hover { background: var(--line); }
+
+/* ── Choice controls: the selected one turns ink */
+.la .ui-seg { padding: 4px; }
+.la .ui-seg-b { height: 42px; }
+.la .ui-seg-b.on { background: var(--text); color: var(--surface); box-shadow: none; }
+.la .ui-pill { height: 42px; padding: 0 20px; background: var(--surface); color: var(--muted); }
+.la .ui-pill:hover { background: var(--line); color: var(--text); }
+.la .ui-pill.on { background: var(--text); color: var(--surface); }
+
+/* ── Sliders: the filled part is solid, what is left is hatched (as in the bars); an ink thumb with a paper ring */
+.la .ui-range { -webkit-appearance: none; appearance: none; height: 28px; background: transparent; outline: none; cursor: pointer; }
+.la .ui-range::-webkit-slider-runnable-track {
+  height: 12px; border-radius: 999px;
+  background:
+    linear-gradient(var(--accent), var(--accent)) 0 0 / var(--p) 100% no-repeat,
+    repeating-linear-gradient(135deg, var(--muted) 0 1.5px, transparent 1.5px 6px);
+}
+.la .ui-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 28px; height: 28px; margin-top: -8px; border-radius: 50%;
+  background: var(--text); border: 5px solid var(--surface); box-shadow: 0 2px 8px rgba(19, 21, 18, 0.3);
+  transition: transform 0.15s;
+}
+.la .ui-range:active::-webkit-slider-thumb { transform: scale(1.12); }
+.la .ui-range::-moz-range-track {
+  height: 12px; border-radius: 999px;
+  background: repeating-linear-gradient(135deg, var(--muted) 0 1.5px, transparent 1.5px 6px);
+}
+.la .ui-range::-moz-range-progress { height: 12px; border-radius: 999px; background: var(--accent); }
+.la .ui-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--text); border: 5px solid var(--surface); box-shadow: 0 2px 8px rgba(19, 21, 18, 0.3); }
+.la .ui-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--accent-soft), 0 2px 8px rgba(19, 21, 18, 0.3); }
+.la .ui-scale-val { font-family: 'Outfit', 'Manrope', sans-serif; font-weight: 300; font-size: 30px; line-height: 1; letter-spacing: -0.02em; }
+
+/* Scrolling sheets: no visible scrollbar either */
+.la .ui-sheet-body { scrollbar-width: none; }
+.la .ui-sheet-body::-webkit-scrollbar { display: none; }
+
+.la .ui-search { height: 52px; border-radius: 20px; font-size: 16px; }
+
+/* ── Picker rows: each option is its own tile; the active one (↑/↓, hover) turns ink and shows the Enter key */
+.la .ui-opts { display: grid; gap: 6px; padding-top: 4px; }
+.la .ui-opts > li { border: 0; }
+.la .ui-opt { margin: 0; width: 100%; padding: 13px 14px 13px 18px; border-radius: 18px; background: var(--surface-2); transition: background 0.12s, color 0.12s; }
+.la .ui-opt.on { background: var(--text); color: var(--surface); }
+.la .ui-opt.on .text-muted, .la .ui-opt.on .text-good { color: rgba(247, 247, 243, 0.72); }
+.la .ui-opt-hint { display: none; place-items: center; min-width: 26px; height: 24px; padding: 0 6px; border-radius: 8px; border: 1px solid rgba(247, 247, 243, 0.45); font-family: inherit; font-size: 13px; line-height: 1; }
+.la .ui-opt.on .ui-opt-hint { display: inline-grid; }
+
+/* ── Grouped blocks inside a sheet (a day of a plan, etc.): a soft tile, white inputs, ink-ish add button */
+.la .ui-tile { background: var(--surface-2); border-radius: 22px; padding: 14px; }
+.la .ui-ex { height: 46px; border-radius: 16px; background: var(--surface); padding: 0 16px; font-size: 15px; }
+.la .ui-add { background: var(--surface); color: var(--text); height: 40px; padding: 0 16px; }
+.la .ui-add:hover { background: var(--line); }
+.la .ui-avg { font-family: 'Outfit', 'Manrope', sans-serif; font-weight: 300; font-size: 30px; line-height: 1; letter-spacing: -0.02em; }
+
+/* Chart tooltips */
+.la .chart-tip { border: 0; border-radius: 16px; box-shadow: 0 12px 30px -14px rgba(19, 21, 18, 0.45); }
+
+/* ── Cards from the shared Widget: same shape and title style as the A cards */
+.la .ui-widget { border-radius: 28px; padding: 18px; }
+.la .ui-widget-title { font-size: 15px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text); }
+
+/* ── Hero from the shared component: the dark green card  */
+.la .ui-hero { margin-inline: 0; padding: 20px 20px 22px; border-radius: 28px; background: var(--accent); color: #eaf4ee; text-align: left; }
+.la .ui-hero-label { margin-top: 14px; font-size: 15px; font-weight: 500; color: rgba(234, 244, 238, 0.8); }
+.la .ui-hero > .ui-hero-label:first-child { margin-top: 0; }
+.la .ui-hero-value { margin-top: 12px; font-family: 'Outfit', 'Manrope', sans-serif; font-weight: 200; font-size: 72px; line-height: 1; letter-spacing: -0.035em; }
+.la .ui-hero-unit { margin-left: 8px; font-size: 22px; font-weight: 300; letter-spacing: 0; color: rgba(234, 244, 238, 0.7); }
+.la .ui-hero-sub { margin-top: 12px; font-size: 13.5px; color: rgba(234, 244, 238, 0.8); }
+.la .ui-hero .text-text { color: #fff; }
+.la .ui-qa { justify-content: flex-start; margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(234, 244, 238, 0.18); }
+.la .ui-qa-c { background: rgba(234, 244, 238, 0.14); color: #eaf4ee; }
+.la .ui-qa-btn:hover .ui-qa-c { background: rgba(234, 244, 238, 0.26); color: #fff; }
+.la .ui-qa-l, .la .ui-qa-btn:hover .ui-qa-l { color: rgba(234, 244, 238, 0.85); }
+
+/* ── Stat: the number first, thin, with its label under it */
+.la .ui-stat { display: flex; flex-direction: column-reverse; }
+.la .ui-stat-label { font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: 0; margin-top: 4px; }
+.la .ui-stat-value { font-family: 'Outfit', 'Manrope', sans-serif; font-weight: 300; font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; }
+
+/* ── Filter chips: the selected one is ink, like the other choice controls */
+.la .ui-chip.on { background: var(--text); color: var(--surface); }
+
+/* A big figure inside a card (a PB time, ...): thin, like the other numerals */
+.la .ui-bignum { font-family: 'Outfit', 'Manrope', sans-serif; font-weight: 300; font-size: 40px; line-height: 1.05; letter-spacing: -0.03em; }
+
+/* ── A group of fields inside a sheet: the field tiles are the groups, so the wrapper has no background of its own */
+.la .ui-group { background: transparent; border-radius: 0; padding: 0; display: grid; gap: 8px; }
+.la .ui-group > .ui-field { margin-top: 0; }
+.la .ui-group > .py-3:not(.ui-field) { padding: 0; }
+.la details.ui-tile > summary { padding: 4px 2px; }
+
+/* ── Clickable list rows: on hover the row turns ink, as in the pickers */
+@media (hover: hover) {
+  .la .ui-row { transition: background 0.12s, color 0.12s; }
+  .la .ui-row:hover { background: var(--text); color: var(--surface); }
+  .la .ui-row:hover :is(.text-muted, .text-good, .text-bad, .text-warn, .text-accent) { color: rgba(247, 247, 243, 0.72); }
+  .la .ui-row:hover .da-dim { color: rgba(247, 247, 243, 0.72); }
+}
+
+/* ── The row of buttons at the end of a form page: stays within reach, like the calculator's bar */
+.la .ui-actionbar { position: sticky; bottom: 10px; z-index: 5; padding: 8px; border-radius: 30px; background: var(--surface); box-shadow: 0 10px 30px -12px rgba(19, 21, 18, 0.35); }
+.la .ui-actionbar .ui-btn { padding: 0 18px; white-space: nowrap; }
+
+/* ── Buttons beside a field: a round icon button and a compact one, as tall as the field */
+.la .ui-btn.ui-btn-sq { width: 52px; height: 52px; padding: 0; }
+.la .ui-btn.ui-btn-compact { height: 52px; padding: 0 18px; }
+
+/* ── The round "+" that adds an item to a list: ink, like the other primary round buttons */
+.la .ui-plus { background: var(--text); color: var(--surface); }
+.la .ui-plus:hover { filter: none; background: #2b2e29; }

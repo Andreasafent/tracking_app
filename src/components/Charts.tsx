@@ -31,7 +31,7 @@ const axis = { fontSize: 11, fill: 'var(--muted)' }
 function Tip(props: { active?: boolean; label?: string; payload?: { dataKey: string; value: number | null }[]; series: Series[] }) {
   if (!props.active || !props.payload?.length) return null
   return (
-    <div className="rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg">
+    <div className="chart-tip rounded-xl border border-line bg-surface px-3 py-2 text-xs shadow-lg">
       <div className="mb-1 font-semibold">{props.label}</div>
       {props.series.map((s) => {
         const p = props.payload!.find((x) => x.dataKey === s.key)
@@ -94,7 +94,7 @@ export function TrendChart(props: {
         tickLine={false}
         axisLine={false}
         width={44}
-        domain={props.domain ?? ['auto', 'auto']}
+        domain={props.domain ?? (props.kind === 'bar' ? [0, 'auto'] : ['auto', 'auto'])}
         reversed={props.reversed}
         tickFormatter={props.yFormat ?? ((v: number) => num(v, 1))}
       />
@@ -121,7 +121,7 @@ export function TrendChart(props: {
             <BarChart data={props.data} barGap={2} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
               {common}
               {props.series.map((s) => (
-                <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[4, 4, 0, 0]} maxBarSize={18} />
+                <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[9, 9, 9, 9]} maxBarSize={18} />
               ))}
             </BarChart>
           ) : (

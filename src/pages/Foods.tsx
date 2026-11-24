@@ -1,7 +1,8 @@
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { Button, ErrorNote, Field, Hero, NumberInput, QuickAction, QuickActions, Segmented, Sheet, TextInput, Widget } from '../components/ui'
+import { PageHeader } from '../components/PageHeader'
+import { Button, ErrorNote, Field, NumberInput, Segmented, Sheet, TextInput, Widget } from '../components/ui'
 import { useDeleteRow, useFoods, useSaveRow } from '../lib/api'
 import type { Food } from '../lib/database.types'
 import { num } from '../lib/format'
@@ -25,11 +26,16 @@ export function Foods() {
 
   return (
     <div className="space-y-3">
-      <Hero label="ΤΡΟΦΙΜΑ" value={num(foods.data?.length ?? 0, 0)} sub="στη βάση του calculator">
-        <QuickActions>
-          <QuickAction icon={<Plus size={20} />} label="Νέο" onClick={() => setEditing({ unit: 'g', per_amount: 100 })} />
-        </QuickActions>
-      </Hero>
+      <PageHeader
+        title="Τρόφιμα"
+        sub={`${num(foods.data?.length ?? 0, 0)} στη βάση του calculator`}
+        actions={
+          <button type="button" className="da-pillbtn" onClick={() => setEditing({ unit: 'g', per_amount: 100 })}>
+            <Plus size={16} /> Νέο
+          </button>
+        }
+      />
+    
       <ErrorNote error={foods.error} />
 
       <div className="relative">
@@ -38,7 +44,7 @@ export function Foods() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Αναζήτηση…"
-          className="h-11 w-full rounded-2xl bg-surface pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
+          className="ui-search h-11 w-full rounded-2xl bg-surface pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
 
@@ -46,7 +52,7 @@ export function Foods() {
         <ul className="divide-y divide-line">
           {list.map((f) => (
             <li key={f.id}>
-              <button type="button" onClick={() => setEditing(f)} className="-mx-2 flex w-[calc(100%+1rem)] items-center rounded-xl px-2 py-3 text-left transition hover:bg-surface-2 gap-3">
+              <button type="button" onClick={() => setEditing(f)} className="ui-row -mx-2 flex w-[calc(100%+1rem)] items-center rounded-xl px-2 py-3 text-left transition hover:bg-surface-2 gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold">{f.name}</div>
                   <div className="text-xs text-muted">

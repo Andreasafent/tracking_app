@@ -1,7 +1,8 @@
 import clsx from 'clsx'
 import { Apple, Check, Plus, Search, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
-import { Button, ErrorNote, Hero, Sheet, Widget } from '../components/ui'
+import { PageHeader } from '../components/PageHeader'
+import { Button, ErrorNote, Sheet, Widget } from '../components/ui'
 import { useClearChecked, useDeleteRow, useFoods, useSaveRow, useShoppingItems, useToggleShopping } from '../lib/api'
 import type { Food } from '../lib/database.types'
 import { num } from '../lib/format'
@@ -30,7 +31,11 @@ export function Shopping() {
 
   return (
     <div className="space-y-3">
-      <Hero label="ΛΙΣΤΑ ΑΓΟΡΩΝ" value={num(rows.length - done, 0)} sub={rows.length ? `${done} από ${rows.length} αγορασμένα` : 'η λίστα είναι άδεια'} />
+      <PageHeader
+        title="Λίστα αγορών"
+        sub={rows.length ? `${num(rows.length - done, 0)} απομένουν · ${done} από ${rows.length} αγορασμένα` : 'η λίστα είναι άδεια'}
+      />
+    
 
       <ErrorNote error={items.error ?? add.error ?? toggle.error ?? del.error ?? clear.error} />
 
@@ -46,12 +51,12 @@ export function Shopping() {
           onChange={(e) => setText(e.target.value)}
           placeholder="Νέο είδος…"
           enterKeyHint="done"
-          className="h-11 min-w-0 flex-1 rounded-2xl bg-surface px-4 text-base outline-none focus:ring-2 focus:ring-accent"
+          className="ui-search h-11 min-w-0 flex-1 rounded-2xl bg-surface px-4 text-base outline-none focus:ring-2 focus:ring-accent"
         />
-        <Button type="submit" disabled={!text.trim() || add.isPending} className="shrink-0 px-4">
+        <Button type="submit" disabled={!text.trim() || add.isPending} className="ui-btn-sq shrink-0 px-4">
           <Plus size={18} />
         </Button>
-        <Button variant="ghost" className="shrink-0 px-4" onClick={() => setPicking(true)}>
+        <Button variant="ghost" className="ui-btn-compact shrink-0 px-4" onClick={() => setPicking(true)}>
           <Apple size={18} /> Τρόφιμα
         </Button>
       </form>
@@ -65,7 +70,7 @@ export function Shopping() {
                   type="button"
                   aria-pressed={r.checked}
                   onClick={() => toggle.mutate({ id: r.id, checked: !r.checked })}
-                  className="-ml-2 flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2"
+                  className="ui-row -ml-2 flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-surface-2"
                 >
                   <span
                     className={clsx(
@@ -142,10 +147,10 @@ function FoodPickerSheet(props: { open: boolean; onClose: () => void; inList: Se
             }
           }}
           placeholder="Αναζήτηση…"
-          className="h-11 w-full rounded-2xl bg-surface-2 pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
+          className="ui-search h-11 w-full rounded-2xl bg-surface-2 pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
         />
       </div>
-      <ul className="mt-2 divide-y divide-line">
+      <ul className="ui-opts mt-2 divide-y divide-line">
         {list.map((f, i) => {
           const added = props.inList.has(f.id)
           return (
@@ -155,13 +160,15 @@ function FoodPickerSheet(props: { open: boolean; onClose: () => void; inList: Se
                 ref={i === hi ? (el) => el?.scrollIntoView({ block: 'nearest' }) : undefined}
                 disabled={added}
                 onClick={() => pick(f)}
+                onMouseMove={() => hi !== i && setHi(i)}
                 className={clsx(
-                  '-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-surface-2',
-                  i === hi && 'bg-surface-2',
+                  'ui-opt -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-surface-2',
+                  i === hi && 'on bg-surface-2',
                 )}
               >
                 <span className={clsx('min-w-0 flex-1 truncate text-sm font-semibold', added && 'text-muted')}>{f.name}</span>
                 {added ? <Check size={16} className="text-good" /> : <Plus size={16} className="text-muted" />}
+                {!added && <kbd className="ui-opt-hint">↵</kbd>}
               </button>
             </li>
           )

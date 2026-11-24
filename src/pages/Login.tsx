@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Button, ErrorNote, TextInput } from '../components/ui'
+import '../styles/layout.css'
+import '../styles/ui.css'
+import '../styles/pages.css'
 
-export function Login() {
+function useLoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState<'in' | 'up'>('in')
@@ -24,11 +27,20 @@ export function Login() {
     else if (mode === 'up' && !res.data.session) setInfo('Ο λογαριασμός δημιουργήθηκε. Επιβεβαίωσε το email σου και μετά συνδέσου.')
   }
 
+  return { email, setEmail, password, setPassword, mode, setMode, error, info, busy, submit }
+}
+
+/** The sign-in screen: warm grey, one floating card, ink button. */
+export function Login() {
+  const { email, setEmail, password, setPassword, mode, setMode, error, info, busy, submit } = useLoginForm()
   return (
-    <div className="hero-glow grid min-h-dvh place-items-center px-4">
-      <form onSubmit={submit} className="w-full max-w-sm space-y-3 rounded-3xl bg-surface p-6">
-        <h1 className="text-2xl font-extrabold tracking-tight">Tracking</h1>
-        <p className="pb-2 text-sm text-muted">{mode === 'in' ? 'Σύνδεση' : 'Δημιουργία λογαριασμού'}</p>
+    <div className="la la-login">
+      <form onSubmit={submit} className="la-login-card">
+        <div className="la-brand">
+          <span className="la-mark" aria-hidden />
+          Tracking
+        </div>
+        <p className="la-login-sub">{mode === 'in' ? 'Σύνδεση' : 'Δημιουργία λογαριασμού'}</p>
         <TextInput type="email" value={email} onChange={setEmail} placeholder="Email" />
         <TextInput type="password" value={password} onChange={setPassword} placeholder="Κωδικός" />
         <ErrorNote error={error} />
@@ -36,11 +48,7 @@ export function Login() {
         <Button type="submit" disabled={busy || !email || !password} className="w-full">
           {mode === 'in' ? 'Σύνδεση' : 'Εγγραφή'}
         </Button>
-        <button
-          type="button"
-          onClick={() => setMode(mode === 'in' ? 'up' : 'in')}
-          className="w-full pt-1 text-center text-xs text-muted transition hover:text-text"
-        >
+        <button type="button" onClick={() => setMode(mode === 'in' ? 'up' : 'in')} className="la-login-switch">
           {mode === 'in' ? 'Πρώτη φορά; Δημιουργία λογαριασμού' : 'Έχεις λογαριασμό; Σύνδεση'}
         </button>
       </form>

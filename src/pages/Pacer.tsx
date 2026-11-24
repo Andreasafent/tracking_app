@@ -3,7 +3,7 @@ import { Flag, Minus, Plus, RotateCcw, Undo2 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { HistoryTab } from '../components/pacer/HistoryTab'
 import { PlanTab } from '../components/pacer/PlanTab'
-import { Button, ErrorNote, Hero, Segmented, Select, Widget } from '../components/ui'
+import { Button, ErrorNote, Segmented, Select } from '../components/ui'
 import { usePacerPlans, useSaveRow } from '../lib/api'
 import type { Json, PacerPlan } from '../lib/database.types'
 import { today } from '../lib/dates'
@@ -25,27 +25,39 @@ import {
   type Scenario,
 } from '../lib/pacer'
 import { useElapsed, usePacerRun, useWakeLock } from '../lib/usePacerRun'
+import '../styles/pages.css'
 
 type Tab = 'race' | 'plan' | 'history'
 
+/** Marathon pacer: a clock that survives a locked phone, laps per km and how they compare with three target plans. */
 export function Pacer() {
   const plans = usePacerPlans()
   const [tab, setTab] = useState<Tab>('race')
   const list = plans.data ?? []
 
   return (
-    <div className="space-y-3">
-      <Segmented
-        value={tab}
-        onChange={setTab}
-        options={[
-          { value: 'race', label: 'ΑΓΩΝΑΣ' },
-          { value: 'plan', label: 'ΠΛΑΝΟ' },
-          { value: 'history', label: 'ΙΣΤΟΡΙΚΟ' },
-        ]}
-      />
+    <div className="da da-flat">
+      <header className="da-top">
+        <div>
+          <h2 className="da-title">Pacer</h2>
+          <div className="da-date">42,195 χλμ · sub-4</div>
+        </div>
+      </header>
+
+      <div className="ca-slot">
+        <Segmented
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'race', label: 'ΑΓΩΝΑΣ' },
+            { value: 'plan', label: 'ΠΛΑΝΟ' },
+            { value: 'history', label: 'ΙΣΤΟΡΙΚΟ' },
+          ]}
+        />
+      </div>
+
       <ErrorNote error={plans.error} />
-      {plans.isSuccess && list.length === 0 && <div className="py-10 text-center text-sm text-muted">Δεν υπάρχει πλάνο</div>}
+      {plans.isSuccess && list.length === 0 && <p className="da-empty">Δεν υπάρχει πλάνο</p>}
       {/* The race stays mounted so its clock and screen lock survive a peek at the other tabs. */}
       {list.length > 0 && (
         <div className={tab === 'race' ? '' : 'hidden'}>
@@ -59,14 +71,10 @@ export function Pacer() {
 }
 
 type Tone = 'good' | 'bad' | 'warn' | 'mute'
-const TONES: Record<Tone, string> = {
-  good: 'bg-good/15 text-good',
-  bad: 'bg-bad/15 text-bad',
-  warn: 'bg-warn/15 text-warn',
-  mute: 'bg-surface-2 text-muted',
-}
-function Pill(props: { tone: Tone; children: ReactNode }) {
-  return <span className={clsx('inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold', TONES[props.tone])}>{props.children}</span>
+
+/** A status line as a tinted tile: it has to read at a glance, mid-race. */
+function Status(props: { tone: Tone; children: ReactNode }) {
+  return <div className={clsx('pc-status', props.tone)}>{props.children}</div>
 }
 
 function RaceTab(props: { plans: PacerPlan[] }) {
@@ -112,120 +120,96 @@ function RaceTab(props: { plans: PacerPlan[] }) {
   }
 
   return (
-    <div className="space-y-3">
-      <Hero
-        label={state.finished != null ? 'ΤΕΡΜΑΤΙΣΜΟΣ' : started ? plan.name : 'ΧΡΟΝΟΜΕΤΡΟ'}
-        value={<span className="tabular-nums">{fmtFull(clock)}</span>}
-        sub={
-          ev ? (
+    <div className="da-grid">
+      <section className="da-card da-dark da-full">
+        <div className="da-row">
+          <span>{state.finished != null ? 'Τερματισμός' : started ? plan.name : 'Χρονόμετρο'}</span>
+          {started && state.finished == null && <span className="da-dim pc-live">{wake ? 'οθόνη ανοιχτή' : 'οθόνη ελεύθερη'}</span>}
+        </div>
+        <div className="da-num pc-clock">{fmtFull(clock)}</div>
+        <div className="da-caption">
+          {ev ? (
             <>
-              χλμ <b className="text-text">{num(cumDist(ev.km), ev.km > 42 ? 3 : 0)}</b> / {num(MARATHON_KM, 3)} · μέσο pace{' '}
-              <b className="text-text">{fmtPace(ev.avgPace)}</b>/χλμ
+              χλμ <b>{num(cumDist(ev.km), ev.km > 42 ? 3 : 0)}</b> / {num(MARATHON_KM, 3)} · μέσο pace <b>{fmtPace(ev.avgPace)}</b>/χλμ
             </>
           ) : started ? (
             'πάτα LAP σε κάθε χιλιόμετρο'
           ) : (
             plan.name
-          )
-        }
-      />
-
-      {!started && (
-        <Widget title="Πριν την εκκίνηση">
-          {props.plans.length > 1 && (
-            <div className="mb-3">
-              <Select
-                value={plan.id}
-                onChange={setChosen}
-                options={props.plans.map((p) => ({ value: p.id, label: p.name }))}
-              />
-            </div>
           )}
-          <div className="mb-3 flex flex-wrap gap-2">
-            {scenarios.map((s, i) => (
-              <Pill key={s.label} tone={i === MAIN ? 'good' : 'mute'}>
-                {s.label}
-                {i === MAIN && ' · κύριος στόχος'}
-              </Pill>
-            ))}
+        </div>
+
+        {!started && (
+          <div className="pc-pre">
+            {props.plans.length > 1 && (
+              <Select value={plan.id} onChange={setChosen} options={props.plans.map((p) => ({ value: p.id, label: p.name }))} />
+            )}
+            <div className="pc-scen">
+              {scenarios.map((s, i) => (
+                <span key={s.label} className={i === MAIN ? 'main' : ''}>
+                  {s.label}
+                  {i === MAIN && ' · κύριος'}
+                </span>
+              ))}
+            </div>
+            <button type="button" className="pc-start" onClick={() => start(plan.id)}>
+              <Flag size={22} /> START
+            </button>
+            <p className="pc-hint">
+              Το χρονόμετρο μετράει από την ώρα που πάτησες START, οπότε είναι σωστό ακόμα κι αν κλειδώσει το κινητό. Ξεκλείδωσε για να
+              δεις τον χρόνο ή να πατήσεις LAP.
+            </p>
           </div>
-          <Button className="h-16 w-full text-lg" onClick={() => start(plan.id)}>
-            <Flag size={20} /> START
-          </Button>
-          <p className="mt-3 text-xs text-muted">
-            Το χρονόμετρο μετράει από την ώρα που πάτησες START, οπότε είναι σωστό ακόμα κι αν κλειδώσει το κινητό. Ξεκλείδωσε για
-            να δεις τον χρόνο ή να πατήσεις LAP. Κατά τον αγώνα η οθόνη προσπαθεί να μένει ανοιχτή.
-          </p>
-        </Widget>
-      )}
+        )}
+      </section>
 
       {running && (
-        <>
-          <button
-            type="button"
-            onClick={pressLap}
-            className="h-24 w-full rounded-3xl bg-accent text-2xl font-extrabold tracking-wide text-white transition active:scale-[0.98]"
-          >
+        <section className="da-full">
+          <button type="button" className="pc-lap" onClick={pressLap}>
             {markKm === LAP_COUNT ? `ΤΕΡΜΑΤΙΣΜΟΣ · ${num(MARATHON_KM, 3)}` : `LAP · χλμ ${markKm}`}
           </button>
-          <div className="flex items-center justify-between gap-2 text-sm">
-            <span className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Προηγούμενο χλμ"
-                disabled={markKm <= nextKm}
-                onClick={() => setMark(markKm - 1)}
-                className="grid size-9 place-items-center rounded-full bg-surface-2 transition active:scale-90 disabled:opacity-30"
-              >
+          <div className="pc-tools">
+            <span className="pc-mark">
+              <button type="button" aria-label="Προηγούμενο χλμ" disabled={markKm <= nextKm} onClick={() => setMark(markKm - 1)}>
                 <Minus size={16} />
               </button>
-              <span className="text-muted">σημειώνω χλμ</span>
-              <b className="w-6 text-center">{markKm}</b>
-              <button
-                type="button"
-                aria-label="Επόμενο χλμ"
-                disabled={markKm >= LAP_COUNT}
-                onClick={() => setMark(markKm + 1)}
-                className="grid size-9 place-items-center rounded-full bg-surface-2 transition active:scale-90 disabled:opacity-30"
-              >
+              <span className="da-dim">σημειώνω χλμ</span>
+              <b>{markKm}</b>
+              <button type="button" aria-label="Επόμενο χλμ" disabled={markKm >= LAP_COUNT} onClick={() => setMark(markKm + 1)}>
                 <Plus size={16} />
               </button>
             </span>
-            <button
-              type="button"
-              disabled={laps.length === 0}
-              onClick={undo}
-              className="flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-3 text-xs font-semibold transition active:scale-95 disabled:opacity-30"
-            >
-              <Undo2 size={14} /> Αναίρεση
+            <button type="button" className="pc-undo" disabled={laps.length === 0} onClick={undo}>
+              <Undo2 size={15} /> Αναίρεση
             </button>
           </div>
-          <p className="text-center text-xs text-muted">
-            {wake ? 'Η οθόνη μένει ανοιχτή.' : 'Η οθόνη μπορεί να κλειδώσει· ο χρόνος παραμένει σωστός.'} Αν ξέχασες χιλιόμετρα, ανέβασε
-            το «σημειώνω χλμ»· τα ενδιάμεσα συμπληρώνονται ισοκατανεμημένα.
+          <p className="da-dim pc-note">
+            Αν ξέχασες χιλιόμετρα, ανέβασε το «σημειώνω χλμ»· τα ενδιάμεσα συμπληρώνονται ισοκατανεμημένα.
           </p>
-        </>
+        </section>
       )}
 
       {state.finished != null && (
-        <Widget title="Ολοκληρώθηκε">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-3xl font-bold tabular-nums">{fmtFull(state.finished)}</div>
-              <div className="text-xs text-muted">
-                {state.finished < 4 * 3600 ? 'Sub-4 ✓' : 'Πάνω από 4:00:00'} · μέσο pace {fmtPace(state.finished / MARATHON_KM)}/χλμ
-              </div>
-            </div>
+        <section className="da-card da-full">
+          <div className="ma-head">
+            <h3>Ολοκληρώθηκε</h3>
             {state.saved ? (
-              <Pill tone="good">Αποθηκεύτηκε</Pill>
+              <span className="ta-status current">
+                <i />
+                Αποθηκεύτηκε
+              </span>
             ) : save.isPending ? (
-              <Pill tone="mute">Αποθήκευση…</Pill>
+              <span className="da-dim">Αποθήκευση…</span>
             ) : (
               <Button onClick={saveRun}>Αποθήκευση</Button>
             )}
           </div>
+          <div className="da-num da-mid">{fmtFull(state.finished)}</div>
+          <div className="da-dim">
+            {state.finished < 4 * 3600 ? 'Sub-4 ✓' : 'Πάνω από 4:00:00'} · μέσο pace {fmtPace(state.finished / MARATHON_KM)}/χλμ
+          </div>
           <ErrorNote error={save.error} />
-        </Widget>
+        </section>
       )}
 
       {ev && <Evaluation ev={ev} scenarios={scenarios} />}
@@ -233,21 +217,23 @@ function RaceTab(props: { plans: PacerPlan[] }) {
       {laps.length > 0 && <LapTable laps={laps} scenarios={scenarios} />}
 
       {started && (
-        <Button
-          variant={armed ? 'danger' : 'ghost'}
-          className="w-full"
-          onClick={() => {
-            // Two taps: the first arms the button, the second wipes the race.
-            if (armed) {
-              reset()
-              setArmed(false)
-              setMark(null)
-              save.reset()
-            } else setArmed(true)
-          }}
-        >
-          <RotateCcw size={16} /> {armed ? 'Σίγουρα; Διαγραφή αγώνα' : state.finished != null ? 'Νέος αγώνας' : 'Ακύρωση αγώνα'}
-        </Button>
+        <div className="da-full">
+          <Button
+            variant={armed ? 'danger' : 'ghost'}
+            className="w-full"
+            onClick={() => {
+              // Two taps: the first arms the button, the second wipes the race.
+              if (armed) {
+                reset()
+                setArmed(false)
+                setMark(null)
+                save.reset()
+              } else setArmed(true)
+            }}
+          >
+            <RotateCcw size={16} /> {armed ? 'Σίγουρα; Διαγραφή αγώνα' : state.finished != null ? 'Νέος αγώνας' : 'Ακύρωση αγώνα'}
+          </Button>
+        </div>
       )}
     </div>
   )
@@ -260,108 +246,107 @@ function Evaluation(props: { ev: NonNullable<ReturnType<typeof evaluateLap>>; sc
   const lapFinal = ev.km === LAP_COUNT
   return (
     <>
-      <Widget title={lapFinal ? 'Τελευταία 195 μ.' : `Χλμ ${ev.km}`}>
-        <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-bold tabular-nums">{fmtPace(ev.pace)}</span>
-          <span className="text-xs text-muted">/χλμ · χρόνος {fmtClock(ev.lapSec)}</span>
-          <span className="ml-auto text-xs text-muted">πλάνο {fmtPace(ev.planned)}</span>
+      <section className="da-card da-span2">
+        <div className="ma-head">
+          <h3>{lapFinal ? 'Τελευταία 195 μ.' : `Χλμ ${ev.km}`}</h3>
+          <span className="da-dim">πλάνο {fmtPace(ev.planned)}</span>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {ev.state === 'ok' ? (
-            <Pill tone="good">Εντός pace ({main.label})</Pill>
-          ) : (
-            <Pill tone={ev.state === 'slow' ? 'bad' : 'warn'}>
-              {ev.state === 'slow' ? 'Πιο αργός' : 'Πιο γρήγορος'} κατά {Math.round(Math.abs(ev.diff))}″/χλμ
-            </Pill>
-          )}
-          {ev.state !== 'ok' && ev.alsoIn.map((l) => <Pill key={l} tone="mute">Εντός pace {l}</Pill>)}
+        <div className="ma-sum">
+          <span className="da-num ma-kcal">{fmtPace(ev.pace)}</span>
+          <span className="da-dim">/χλμ · χρόνος {fmtClock(ev.lapSec)}</span>
         </div>
-      </Widget>
+        {ev.state === 'ok' ? (
+          <Status tone="good">Εντός pace ({main.label})</Status>
+        ) : (
+          <Status tone={ev.state === 'slow' ? 'bad' : 'warn'}>
+            {ev.state === 'slow' ? 'Πιο αργός' : 'Πιο γρήγορος'} κατά {Math.round(Math.abs(ev.diff))}″/χλμ
+          </Status>
+        )}
+        {ev.state !== 'ok' && ev.alsoIn.length > 0 && <p className="da-dim pc-also">Εντός pace και για: {ev.alsoIn.join(', ')}</p>}
+      </section>
 
-      <Widget title="Συνολικός χρόνος">
-        <div className="mb-3 flex flex-wrap gap-2">
-          {ev.totalState === 'ok' ? (
-            <Pill tone="good">Εντός ±{TOTAL_TOL / 60}′ από το {main.label}</Pill>
-          ) : ev.totalState === 'behind' ? (
-            <Pill tone="bad">Πίσω από το {main.label} κατά {fmtClock(behindBy)}</Pill>
-          ) : (
-            <Pill tone="warn">Μπροστά από το {main.label} κατά {fmtClock(behindBy)}</Pill>
-          )}
-          {ev.totalState !== 'ok' && ev.within.length > 0 && <Pill tone="mute">Εντός ±{TOTAL_TOL / 60}′ από {ev.within.join(', ')}</Pill>}
-        </div>
-        <table className="w-full text-sm">
-          <thead className="text-[11px] text-muted uppercase">
+      <section className="da-card da-span2">
+        <h3>Συνολικός χρόνος</h3>
+        {ev.totalState === 'ok' ? (
+          <Status tone="good">
+            Εντός ±{TOTAL_TOL / 60}′ από το {main.label}
+          </Status>
+        ) : ev.totalState === 'behind' ? (
+          <Status tone="bad">
+            Πίσω από το {main.label} κατά {fmtClock(behindBy)}
+          </Status>
+        ) : (
+          <Status tone="warn">
+            Μπροστά από το {main.label} κατά {fmtClock(behindBy)}
+          </Status>
+        )}
+        {ev.totalState !== 'ok' && ev.within.length > 0 && (
+          <p className="da-dim pc-also">
+            Εντός ±{TOTAL_TOL / 60}′ από: {ev.within.join(', ')}
+          </p>
+        )}
+        <table className="pc-table">
+          <thead>
             <tr>
-              <th className="text-left font-medium">Στόχος</th>
-              <th className="text-right font-medium">Πλάνο στο χλμ</th>
-              <th className="text-right font-medium">Διαφορά</th>
+              <th>Στόχος</th>
+              <th>Πλάνο στο χλμ</th>
+              <th>Διαφορά</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-line">
+          <tbody>
             {scenarios.map((s, i) => {
               const d = ev.deltas[i]
               const within = Math.abs(d) <= TOTAL_TOL
               return (
-                <tr key={s.label} className={i === MAIN ? 'font-semibold' : ''}>
-                  <td className="py-2">{s.label}</td>
-                  <td className="py-2 text-right tabular-nums">{fmtClock(cumulative(s.laps)[ev.km - 1])}</td>
-                  <td className={clsx('py-2 text-right tabular-nums', within ? 'text-good' : d > 0 ? 'text-bad' : 'text-warn')}>
-                    {fmtDelta(d)}
-                  </td>
+                <tr key={s.label} className={i === MAIN ? 'main' : ''}>
+                  <td>{s.label}</td>
+                  <td>{fmtClock(cumulative(s.laps)[ev.km - 1])}</td>
+                  <td className={within ? 'good' : d > 0 ? 'bad' : 'warn'}>{fmtDelta(d)}</td>
                 </tr>
               )
             })}
           </tbody>
         </table>
-      </Widget>
+      </section>
 
-      <Widget title="Sub-4">
-        <div className="mb-3">
-          <Pill tone={ev.sub4.onTrack ? 'good' : 'bad'}>
-            {ev.sub4.onTrack
-              ? `On track · ${fmtClock(-ev.sub4.delta)} μπροστά από το όριο`
-              : `Πίσω από το όριο sub-4 κατά ${fmtClock(ev.sub4.delta)}`}
-          </Pill>
-        </div>
-        <dl className="space-y-1.5 text-sm">
-          <Row k="Μέσο pace μέχρι τώρα" v={`${fmtPace(ev.avgPace)}/χλμ`} />
-          <Row
-            k="Pace για sub-4 στα υπόλοιπα"
-            v={ev.sub4.requiredPace == null ? '—' : `${fmtPace(ev.sub4.requiredPace)}/χλμ`}
-          />
-          <Row
-            k={`Πρόβλεψη αν ακολουθήσεις το ${main.label}`}
-            v={fmtFull(ev.sub4.projected)}
-            tone={ev.sub4.projected < 4 * 3600 ? 'good' : 'bad'}
-          />
+      <section className="da-card da-span2">
+        <h3>Sub-4</h3>
+        <Status tone={ev.sub4.onTrack ? 'good' : 'bad'}>
+          {ev.sub4.onTrack
+            ? `On track · ${fmtClock(-ev.sub4.delta)} μπροστά από το όριο`
+            : `Πίσω από το όριο sub-4 κατά ${fmtClock(ev.sub4.delta)}`}
+        </Status>
+        <dl className="da-rows">
+          <div>
+            <dt>Μέσο pace μέχρι τώρα</dt>
+            <dd>{fmtPace(ev.avgPace)}/χλμ</dd>
+          </div>
+          <div>
+            <dt>Pace για sub-4 στα υπόλοιπα</dt>
+            <dd>{ev.sub4.requiredPace == null ? '—' : `${fmtPace(ev.sub4.requiredPace)}/χλμ`}</dd>
+          </div>
+          <div>
+            <dt>Πρόβλεψη (πλάνο {main.label})</dt>
+            <dd className={ev.sub4.projected < 4 * 3600 ? 'pc-good' : 'pc-bad'}>{fmtFull(ev.sub4.projected)}</dd>
+          </div>
         </dl>
-      </Widget>
+      </section>
 
       {ev.next && (
-        <Widget title={`Επόμενο ${ev.next.km === LAP_COUNT ? 'τμήμα (195 μ.)' : `χλμ ${ev.next.km}`}`}>
-          <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-bold tabular-nums">{fmtPace(ev.next.advised)}</span>
-            <span className="text-xs text-muted">
+        <section className="da-card da-span2">
+          <h3>Επόμενο {ev.next.km === LAP_COUNT ? 'τμήμα (195 μ.)' : `χλμ ${ev.next.km}`}</h3>
+          <div className="ma-sum">
+            <span className="da-num ma-kcal">{fmtPace(ev.next.advised)}</span>
+            <span className="da-dim">
               /χλμ · χρόνος {fmtClock(ev.next.lapTarget)} · πλάνο {fmtPace(ev.next.planned)}
             </span>
           </div>
-          <div className="mt-3">
-            <Pill tone={ev.next.verb === 'hold' ? 'good' : ev.next.verb === 'faster' ? 'warn' : 'mute'}>
-              {ev.next.verb === 'faster' ? 'Πιο γρήγορα από το πλάνο' : ev.next.verb === 'slower' ? 'Πιο αργά από το πλάνο' : 'Κράτα το πλάνο'}
-            </Pill>
-          </div>
-        </Widget>
+          <Status tone={ev.next.verb === 'hold' ? 'good' : ev.next.verb === 'faster' ? 'warn' : 'mute'}>
+            {ev.next.verb === 'faster' ? 'Πιο γρήγορα από το πλάνο' : ev.next.verb === 'slower' ? 'Πιο αργά από το πλάνο' : 'Κράτα το πλάνο'}
+          </Status>
+        </section>
       )}
     </>
-  )
-}
-
-function Row(props: { k: string; v: string; tone?: 'good' | 'bad' }) {
-  return (
-    <div className="flex justify-between gap-3">
-      <dt className="text-muted">{props.k}</dt>
-      <dd className={clsx('font-semibold tabular-nums', props.tone === 'good' && 'text-good', props.tone === 'bad' && 'text-bad')}>{props.v}</dd>
-    </div>
   )
 }
 
@@ -369,36 +354,38 @@ function LapTable(props: { laps: { km: number; t: number; est?: boolean }[]; sce
   const main = props.scenarios[Math.min(MAIN, props.scenarios.length - 1)]
   const cum = cumulative(main.laps)
   return (
-    <Widget title="Χιλιόμετρα">
-      <table className="w-full text-sm tabular-nums">
-        <thead className="text-[11px] text-muted uppercase">
+    <section className="da-card da-full">
+      <h3>Χιλιόμετρα</h3>
+      <table className="pc-table pc-laps">
+        <thead>
           <tr>
-            <th className="text-left font-medium">Χλμ</th>
-            <th className="text-right font-medium">Split</th>
-            <th className="text-right font-medium">Pace</th>
-            <th className="text-right font-medium">Σύνολο</th>
-            <th className="text-right font-medium">vs {main.label}</th>
+            <th>Χλμ</th>
+            <th>Split</th>
+            <th>Pace</th>
+            <th>Σύνολο</th>
+            <th>vs {main.label}</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-line">
+        <tbody>
           {[...props.laps].reverse().map((l) => {
             const prev = props.laps[l.km - 2]?.t ?? 0
             const split = l.t - prev
             const d = l.t - cum[l.km - 1]
             return (
-              <tr key={l.km} className={l.est ? 'text-muted italic' : ''}>
-                <td className="py-1.5">{l.km === LAP_COUNT ? 'τέρμα' : l.km}</td>
-                <td className="py-1.5 text-right">{l.est && '~'}{fmtClock(split)}</td>
-                <td className="py-1.5 text-right">{fmtPace(split / lapDist(l.km))}</td>
-                <td className="py-1.5 text-right">{fmtClock(l.t)}</td>
-                <td className={clsx('py-1.5 text-right', Math.abs(d) <= TOTAL_TOL ? 'text-good' : d > 0 ? 'text-bad' : 'text-warn')}>
-                  {fmtDelta(d)}
+              <tr key={l.km} className={l.est ? 'est' : ''}>
+                <td>{l.km === LAP_COUNT ? 'τέρμα' : l.km}</td>
+                <td>
+                  {l.est && '~'}
+                  {fmtClock(split)}
                 </td>
+                <td>{fmtPace(split / lapDist(l.km))}</td>
+                <td>{fmtClock(l.t)}</td>
+                <td className={Math.abs(d) <= TOTAL_TOL ? 'good' : d > 0 ? 'bad' : 'warn'}>{fmtDelta(d)}</td>
               </tr>
             )
           })}
         </tbody>
       </table>
-    </Widget>
+    </section>
   )
 }

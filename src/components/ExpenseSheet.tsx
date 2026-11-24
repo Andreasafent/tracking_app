@@ -1,6 +1,6 @@
+import { useNavigate } from 'react-router'
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { useDeleteRow, useExpenseCategories, useExpenseProducts, useSaveRow } from '../lib/api'
 import type { Expense, ExpenseProduct } from '../lib/database.types'
 import { type ISODate } from '../lib/dates'
@@ -152,10 +152,10 @@ export function ExpenseSheet(props: { target: ExpenseTarget | null; date: ISODat
                 }
               }}
               placeholder="Αναζήτηση προϊόντος…"
-              className="h-11 w-full rounded-2xl bg-surface-2 pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
+              className="ui-search h-11 w-full rounded-2xl bg-surface-2 pr-3 pl-9 text-base outline-none focus:ring-2 focus:ring-accent"
             />
           </div>
-          <ul className="mt-2 divide-y divide-line">
+          <ul className="ui-opts mt-2 divide-y divide-line">
             {list.map((p, i) => {
               const cat = categories.find((c) => c.id === p.category_id)
               return (
@@ -164,11 +164,13 @@ export function ExpenseSheet(props: { target: ExpenseTarget | null; date: ISODat
                     type="button"
                     ref={i === hi ? (el) => el?.scrollIntoView({ block: 'nearest' }) : undefined}
                     onClick={() => pick(p)}
-                    className={`-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-surface-2 ${i === hi ? 'bg-surface-2' : ''}`}
+                    onMouseMove={() => hi !== i && setHi(i)}
+                    className={`ui-opt -mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-surface-2 ${i === hi ? 'on bg-surface-2' : ''}`}
                   >
                     <span className="size-2.5 shrink-0 rounded-full" style={{ background: cat?.color ?? 'var(--muted)' }} />
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold">{p.name}</span>
                     {p.unit_price != null && <span className="text-xs text-muted">{eur(p.unit_price)}</span>}
+                    <kbd className="ui-opt-hint">↵</kbd>
                   </button>
                 </li>
               )

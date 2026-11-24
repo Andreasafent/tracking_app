@@ -86,7 +86,7 @@ export function RacesTab(props: { tabs: ReactNode }) {
                   <button
                     type="button"
                     onClick={() => setOpen({ race: r })}
-                    className="w-full rounded-2xl px-2 py-2.5 text-left transition hover:bg-surface-2 active:scale-[0.99]"
+                    className="ui-row w-full rounded-2xl px-2 py-2.5 text-left transition hover:bg-surface-2 active:scale-[0.99]"
                   >
                     <div className="flex items-baseline gap-2">
                       <span className="min-w-0 flex-1 truncate text-sm font-semibold">{r.race_name || d.name}</span>
@@ -140,7 +140,7 @@ export function RacesTab(props: { tabs: ReactNode }) {
                   <button
                     type="button"
                     onClick={() => setOpen({ race: r })}
-                    className="flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left transition hover:bg-surface-2 active:scale-[0.99]"
+                    className="ui-row flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left transition hover:bg-surface-2 active:scale-[0.99]"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 text-sm font-semibold">
