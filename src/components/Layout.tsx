@@ -6,6 +6,7 @@ import {
   BookOpen,
   Calculator,
   CalendarDays,
+  Camera,
   ChartPie,
   Dumbbell,
   Footprints,
@@ -70,6 +71,7 @@ const GROUPS: { title: string | null; items: Item[] }[] = [
     items: [
       { to: '/weekly', label: 'WEEKLY STATS', icon: BarChart3 },
       { to: '/monthly', label: 'MONTHLY STATS', icon: CalendarDays },
+      { to: '/photos', label: 'ΦΩΤΟ ΠΡΟΟΔΟΥ', icon: Camera },
     ],
   },
   { title: null, items: [{ to: '/settings', label: 'ΡΥΘΜΙΣΕΙΣ', icon: Settings }] },

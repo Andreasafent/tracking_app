@@ -4,6 +4,7 @@ import { Activity, ArrowUpRight, Calculator, ChevronLeft, ChevronRight, Plus, Sc
 import { useState, type ReactNode } from 'react'
 import { GroupSheet, type GroupKey } from '../components/DailyFields'
 import { DuePayments } from '../components/DuePayments'
+import { ReminderBanners } from '../components/ReminderBanners'
 import { WorkoutSheet } from '../components/WorkoutSheet'
 import { ErrorNote } from '../components/ui'
 import { useActivities, useDailyLog, usePeriods, useSummaries, useTrainingPlans, useWorkouts } from '../lib/api'
@@ -141,6 +142,7 @@ export function Genika() {
       </header>
 
       <ErrorNote error={summaries.error} />
+      <ReminderBanners />
 
       <div key={date} className={anim}>
         <div className="da-grid">

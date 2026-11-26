@@ -14,6 +14,7 @@ import { Macros } from './pages/Macros'
 import { Meals } from './pages/Meals'
 import { Monthly } from './pages/Monthly'
 import { Pacer } from './pages/Pacer'
+import { Photos } from './pages/Photos'
 import { Plan } from './pages/Plan'
 import { Products } from './pages/Products'
 import { Progress } from './pages/Progress'
@@ -63,6 +64,7 @@ export function AppRoutes() {
         <Route path="products" element={<Products />} />
         <Route path="weekly" element={<Weekly />} />
         <Route path="monthly" element={<Monthly />} />
+        <Route path="photos" element={<Photos />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="a/*" element={<LegacyPreview />} />
         <Route path="*" element={<Genika />} />

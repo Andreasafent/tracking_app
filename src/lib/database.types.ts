@@ -244,6 +244,28 @@ type PacerRunRow = {
   user_id: string
 }
 
+type BodyPhotoRow = {
+  created_at: string
+  id: string
+  path: string
+  taken_on: string
+  thumb_path: string
+  user_id: string
+}
+
+type ReminderRow = {
+  auto_photo: boolean
+  created_at: string
+  done_through: string | null
+  id: string
+  lead_days: number
+  name: string
+  repeat_every: number
+  repeat_unit: 'day' | 'week' | 'month' | null
+  start_date: string
+  user_id: string
+}
+
 type Nullable<T> = { [K in keyof T]: T[K] | null }
 type InsertOf<T, Required extends keyof T> = Partial<T> & Pick<T, Required>
 
@@ -314,6 +336,7 @@ export type Database = {
   public: {
     Tables: {
       activities: Table<ActivityRow, 'name'>
+      body_photos: Table<BodyPhotoRow, 'taken_on' | 'path' | 'thumb_path'>
       daily_log: Table<DailyLogRow, 'date'>
       distance_efforts: Table<DistanceEffortRow, 'distance_id' | 'date'>
       exercise_logs: Table<ExerciseLogRow, 'exercise_id' | 'date'>
@@ -327,6 +350,7 @@ export type Database = {
       pacer_plans: Table<PacerPlanRow, 'name' | 'scenarios'>
       pacer_runs: Table<PacerRunRow, 'laps'>
       periods: Table<PeriodRow, 'start_date' | 'end_date' | 'target_intake' | 'burn_estimate'>
+      reminders: Table<ReminderRow, 'name' | 'start_date'>
       run_plan_weeks: Table<RunPlanWeekRow, 'week_no' | 'start_date' | 'end_date'>
       shopping_items: Table<ShoppingItemRow, 'name'>
       saved_meals: Table<SavedMealRow, 'name'>
@@ -374,5 +398,7 @@ export type ShoppingItem = ShoppingItemRow
 export type PacerPlan = PacerPlanRow
 export type PacerRun = PacerRunRow
 export type Workout = WorkoutRow
+export type BodyPhoto = BodyPhotoRow
+export type Reminder = ReminderRow
 export type DailySummary = DailySummaryRow
 export type { MealSlot }

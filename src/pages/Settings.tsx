@@ -1,6 +1,7 @@
 import { Archive, ArchiveRestore, LogOut, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { PageHeader } from '../components/PageHeader'
+import { ReminderSettings } from '../components/ReminderSettings'
 import { Button, ErrorNote, Field, Select, Sheet, TextInput, Widget } from '../components/ui'
 import { useActivities, useActivityUsage, useDeleteRow, useSaveRow } from '../lib/api'
 import type { Activity } from '../lib/database.types'
@@ -73,6 +74,8 @@ export function SettingsPage() {
           </Button>
         </div>
       </Widget>
+
+      <ReminderSettings />
 
       <ActivitySheet activity={editing} onClose={() => setEditing(null)} />
 

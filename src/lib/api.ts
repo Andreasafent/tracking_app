@@ -176,6 +176,13 @@ export function useShoppingItems() {
   })
 }
 
+export function useReminders() {
+  return useQuery({
+    queryKey: ['reminders'],
+    queryFn: async () => must(await supabase.from('reminders').select('*').order('created_at')),
+  })
+}
+
 export function useRunPlan() {
   return useQuery({
     queryKey: ['run_plan'],
@@ -340,6 +347,8 @@ type CrudTable =
   | 'exercise_logs'
   | 'pb_distances'
   | 'distance_efforts'
+  | 'body_photos'
+  | 'reminders'
 const crudKey: Record<CrudTable, string> = {
   foods: 'foods',
   expense_categories: 'expense_categories',
@@ -357,6 +366,8 @@ const crudKey: Record<CrudTable, string> = {
   pb_distances: 'pb_distances',
   distance_efforts: 'distance_efforts',
   activities: 'activities',
+  body_photos: 'body_photos',
+  reminders: 'reminders',
 }
 
 export function useSaveRow<T extends CrudTable>(table: T) {
